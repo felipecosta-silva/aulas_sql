@@ -11,7 +11,31 @@
 </head>
 
 <body>
-  <div id="menu-placeholder"></div>
+  <div class="overlay" id="overlay"></div>
+
+  <button class="hamburger-menu" id="hamburger-menu">
+    <i class="fas fa-bars"></i>
+  </button>
+
+  <div class="sidebar" id="sidebar">
+    <h2>PL/SQL 🚀</h2>
+    <a href="index.html"><i class="fas fa-home"></i> <span>Início</span></a>
+    <a href="Conceitos BD.html"><i class="fas fa-book"></i> <span>Conceitos
+        BD</span></a>
+    <a href="SQL Essencial.html"><i class="fas fa-code"></i> <span>SQL Essencial</span></a>
+    <a href="SQL - Fundamentos Avançados.html"><i class="fas fa-database"></i> <span>SQL Fundamentos
+        Avançados</span></a>
+    <a href="SQL - Agregacao e Subconsultas.html"><i class="fas fa-calculator"></i> <span>Agregação e
+        Subconsultas</span></a>
+    <a href="SQL - DDL Avancado e objetos.html"><i class="fas fa-cogs"></i> <span>SQL DDL Avançado</span></a>
+    <a href="Prática e Otimização.html"><i class="fas fa-chart-line"></i> <span>Prática e Otimização</span></a>
+    <a href="PLSQL - Fundamentos e Estruturas de Controle.html"><i class="fas fa-file-code"></i> <span>PL/SQL
+        Fundamentos</span></a>
+    <a href="SQL Programacao.html"><i class="fas fa-cogs"></i><span>PL/SQL Programação</span></a>
+    <a href="PLSQL - Tratamento de Excecoes e Pacotes.html"><i class="fas fa-boxes"></i> <span>PL/SQL Exceções e
+        Pacotes</span></a>
+    <a href="Extras - PL_SQL Avançado.html"><i class="fas fa-plus-circle"></i> <span>PL/SQL Avançado</span></a>
+  </div>
 
   <div class="content" id="content">
     <header>
@@ -453,59 +477,65 @@ END;
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      // Function to load the menu
-      function loadMenu() {
-        fetch('/menu.html')
-          .then(response => response.text())
-          .then(data => {
-            document.getElementById('menu-placeholder').innerHTML = data;
-            initializeSidebar(); // Initialize sidebar functionality after loading menu
-          })
-          .catch(error => console.error('Error loading menu:', error));
+
+      const hamburgerMenu = document.getElementById('hamburger-menu');
+      const sidebar = document.getElementById('sidebar');
+      const content = document.getElementById('content');
+      const overlay = document.getElementById('overlay');
+      const sidebarLinks = sidebar.querySelectorAll('a');
+
+      function toggleSidebar() {
+        sidebar.classList.toggle('active');
+        content.classList.toggle('sidebar-active');
+        overlay.classList.toggle('active');
       }
 
-      function initializeSidebar() {
-        const hamburgerMenu = document.getElementById('hamburger-menu');
-        const sidebar = document.getElementById('sidebar');
-        const content = document.getElementById('content');
-        const overlay = document.getElementById('overlay');
-        const sidebarLinks = sidebar.querySelectorAll('a');
-
-        function toggleSidebar() {
-          sidebar.classList.toggle('active');
-          content.classList.toggle('sidebar-active');
-          overlay.classList.toggle('active');
-        }
-
+      // Adiciona event listeners APÓS os elementos serem garantidamente carregados no DOM
+      if (hamburgerMenu) {
         hamburgerMenu.addEventListener('click', toggleSidebar);
+      } else {
+        console.warn('Elemento #hamburger-menu não encontrado. Verifique o HTML.');
+      }
+
+      if (overlay) {
         overlay.addEventListener('click', toggleSidebar);
+      } else {
+        console.warn('Elemento #overlay não encontrado. Verifique o HTML.');
+      }
+
+
+      sidebarLinks.forEach(link => {
+        link.addEventListener('click', function () {
+          if (sidebar.classList.contains('active')) {
+            toggleSidebar();
+          }
+        });
+      });
+
+      function highlightActiveLink() {
+        const currentPathname = window.location.pathname;
+        let currentFileName = currentPathname.split('/').pop();
+
+        // Se a URL termina em '/', o arquivo atual é 'index.html'
+        if (currentFileName === '' || currentFileName === 'aulas_sql') { // Adicionado 'aulas_sql' caso a URL base seja só o nome do repo
+          currentFileName = 'index.html';
+        }
 
         sidebarLinks.forEach(link => {
-          link.addEventListener('click', function () {
-            if (sidebar.classList.contains('active')) {
-              toggleSidebar();
-            }
-          });
+          const linkHref = link.getAttribute('href');
+
+          link.classList.remove('active'); // Remove de todos primeiro
+
+          // Lógica para marcar o link ativo
+          if (linkHref === currentFileName || (currentFileName === 'index.html' && linkHref === 'index.html')) {
+            link.classList.add('active');
+          }
         });
-
-        function highlightActiveLink() {
-          const currentPath = window.location.pathname.split('/').pop();
-          sidebarLinks.forEach(link => {
-            const linkPath = link.getAttribute('href');
-            if (linkPath === currentPath || (currentPath === '' && linkPath === 'index.html')) {
-              link.classList.add('active');
-            } else {
-              link.classList.remove('active');
-            }
-          });
-        }
-
-        highlightActiveLink();
       }
 
-      // Load the menu when the DOM is ready
-      loadMenu();
+      highlightActiveLink(); // Chama a função ao inicializar a sidebar
 
+      // Função para mostrar/esconder o gabarito
       window.toggleAnswer = function (id) {
         var x = document.getElementById(id);
         if (x.style.display === "none" || x.style.display === "") {
