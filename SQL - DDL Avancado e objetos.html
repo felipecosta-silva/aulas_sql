@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQL - DDL Avançado e Objetos</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+</head>
+
+<body>
+  <div id="menu-placeholder"></div>
+
+  <div class="content" id="content">
+    <header>
+      <h1>SQL - DDL Avançado e Objetos</h1>
+      <p>Aprenda a modificar a estrutura do banco de dados, gerenciar objetos e otimizar acessos.</p>
+    </header>
+
+    <div class="main-section">
+
+      <div class="sub-section">
+        <h2>0️⃣ Configuração Inicial: Criação das Tabelas e Inserção de Dados <i class="fas fa-database"></i>
+        </h2>
+        <p>Para praticar os comandos DDL e a manipulação de objetos, vamos configurar as tabelas:
+          `ALUNOS`, `PROFESSORES`, `TURMAS`, `NOTAS` e `DISCIPLINAS`.</p>
+
+        <div class="card">
+          <h4>Criação e População das Tabelas</h4>
+          <pre><code class="language-sql">
+-- Remover tabelas antigas se existirem (a ordem importa devido às chaves estrangeiras)
+DROP TABLE NOTAS CASCADE CONSTRAINTS;
+DROP TABLE TURMAS CASCADE CONSTRAINTS;
+DROP TABLE DISCIPLINAS CASCADE CONSTRAINTS; -- Adicionado para a nova tabela
+DROP TABLE PROFESSORES CASCADE CONSTRAINTS;
+DROP TABLE ALUNOS CASCADE CONSTRAINTS;
+
+
+-- Tabela ALUNOS
+CREATE TABLE ALUNOS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    NOME VARCHAR2(255) NOT NULL,
+    DATA_NASCIMENTO DATE NOT NULL,
+    TELEFONE VARCHAR2(20) DEFAULT 'Não informado',
+    SEXO VARCHAR2(1),
+    EMAIL VARCHAR2(255),
+    DATA_MATRIICULA DATE NOT NULL,
+    STATUS_MATRICULA VARCHAR2(20) CHECK (STATUS_MATRICULA IN ('Ativo', 'Transferido', 'Trancado'))
+);
+
+-- Tabela PROFESSORES
+CREATE TABLE PROFESSORES (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    NOME VARCHAR2(150) NOT NULL,
+    ESPECIALIDADE VARCHAR2(100) NOT NULL,
+    DT_ADIMISSAO DATE NOT NULL,
+    TELEFONE VARCHAR2(20),
+    EMAIL VARCHAR2(150),
+    SALARIO NUMBER(10,2) NOT NULL
+);
+
+-- Tabela DISCIPLINAS (Nova tabela adicionada)
+CREATE TABLE DISCIPLINAS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    NOME_DISCIPLINA VARCHAR2(100) NOT NULL UNIQUE,
+    CARGA_HORARIA NUMBER(3) NOT NULL,
+    PROFESSOR_RESPONSAVEL_ID NUMBER,
+    CONSTRAINT FK_PROF_DISC FOREIGN KEY (PROFESSOR_RESPONSAVEL_ID) REFERENCES PROFESSORES (ID)
+);
+
+-- Tabela TURMAS
+CREATE TABLE TURMAS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    ANO_LETIVO NUMBER(4) NOT NULL,
+    SERIE VARCHAR2(20) NOT NULL,
+    TURNO VARCHAR2(1) CHECK (TURNO IN('M','T','N')),
+    PROFESSOR_ID NUMBER,
+    NUMERO_ALUNOS NUMBER(3) CHECK (NUMERO_ALUNOS >= 2),
+    CONSTRAINT FK_PROFESSOR FOREIGN KEY (PROFESSOR_ID) REFERENCES PROFESSORES (ID)
+);
+
+-- Tabela NOTAS
+CREATE TABLE NOTAS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    ALUNO_ID NUMBER,
+    TURMA_ID NUMBER,
+    DISCIPLINA_ID NUMBER, -- Alterado para referenciar DISCIPLINA_ID
+    NOTA_1  NUMBER(5,2),
+    NOTA_2  NUMBER(5,2),
+    NOTA_3  NUMBER(5,2),
+    NOTA_4  NUMBER(5,2),
+    MEDIA_FINAL NUMBER(5,2),
+    CONSTRAINT fk_aluno  FOREIGN KEY (aluno_id)
+        REFERENCES Alunos(id),
+    CONSTRAINT fk_turma
+        FOREIGN KEY (turma_id)
+        REFERENCES Turmas(id),
+    CONSTRAINT fk_disciplina FOREIGN KEY (DISCIPLINA_ID)
+        REFERENCES DISCIPLINAS(ID) -- Nova FK
+);
+
+-- Inserção de dados na tabela ALUNOS
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, TELEFONE, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('João Silva', TO_DATE('2005-03-15', 'YYYY-MM-DD'), '99999-1234', 'M', 'joao.silva@email.com', TO_DATE('2020-02-10', 'YYYY-MM-DD'), 'Ativo');
+
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, TELEFONE, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('Maria Oliveira', TO_DATE('2004-07-21', 'YYYY-MM-DD'), '99999-5678', 'F', 'maria.oliveira@email.com', TO_DATE('2019-03-01', 'YYYY-MM-DD'), 'Transferido');
+
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, TELEFONE, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('Lucas Pereira', TO_DATE('2006-12-10', 'YYYY-MM-DD'), '99999-9876', 'M', 'lucas.pereira@email.com', TO_DATE('2021-03-15', 'YYYY-MM-DD'), 'Ativo');
+
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, TELEFONE, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('Ana Souza', TO_DATE('2005-01-20', 'YYYY-MM-DD'), '99999-1111', 'F', 'ana.souza@email.com', TO_DATE('2020-08-01', 'YYYY-MM-DD'), 'Ativo');
+
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, TELEFONE, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('Pedro Santos', TO_DATE('2007-09-05', 'YYYY-MM-DD'), '99999-2222', 'M', 'pedro.santos@email.com', TO_DATE('2022-01-20', 'YYYY-MM-DD'), 'Ativo');
+
+
+-- Inserção de dados na tabela PROFESSORES
+INSERT INTO PROFESSORES (NOME, ESPECIALIDADE, DT_ADIMISSAO, TELEFONE, EMAIL, SALARIO)
+VALUES ('Carlos Souza', 'Matemática', TO_DATE('2015-02-25', 'YYYY-MM-DD'), '99999-1234', 'carlos.souza@email.com', 3500.00); -- ID 1
+
+INSERT INTO PROFESSORES (NOME, ESPECIALIDADE, DT_ADIMISSAO, TELEFONE, EMAIL, SALARIO)
+VALUES ('Ana Costa', 'Português', TO_DATE('2017-06-10', 'YYYY-MM-DD'), '99999-5678', 'ana.costa@email.com', 3000.00); -- ID 2
+
+INSERT INTO PROFESSORES (NOME, ESPECIALIDADE, DT_ADIMISSAO, TELEFONE, EMAIL, SALARIO)
+VALUES ('Ricardo Almeida', 'História', TO_DATE('2019-09-15', 'YYYY-MM-DD'), '99999-2468', 'ricardo.almeida@email.com', 2800.00); -- ID 3
+
+INSERT INTO PROFESSORES (NOME, ESPECIALIDADE, DT_ADIMISSAO, TELEFONE, EMAIL, SALARIO)
+VALUES ('Mariana Lima', 'Ciências', TO_DATE('2018-03-01', 'YYYY-MM-DD'), '99999-3333', 'mariana.lima@email.com', 3200.00); -- ID 4
+
+
+-- Inserção de dados na tabela DISCIPLINAS
+INSERT INTO DISCIPLINAS (NOME_DISCIPLINA, CARGA_HORARIA, PROFESSOR_RESPONSAVEL_ID)
+VALUES ('Matemática', 80, 1); -- Carlos Souza
+INSERT INTO DISCIPLINAS (NOME_DISCIPLINA, CARGA_HORARIA, PROFESSOR_RESPONSAVEL_ID)
+VALUES ('Português', 70, 2); -- Ana Costa
+INSERT INTO DISCIPLINAS (NOME_DISCIPLINA, CARGA_HORARIA, PROFESSOR_RESPONSAVEL_ID)
+VALUES ('História', 60, 3); -- Ricardo Almeida
+INSERT INTO DISCIPLINAS (NOME_DISCIPLINA, CARGA_HORARIA, PROFESSOR_RESPONSAVEL_ID)
+VALUES ('Ciências', 75, 4); -- Mariana Lima
+INSERT INTO DISCIPLINAS (NOME_DISCIPLINA, CARGA_HORARIA, PROFESSOR_RESPONSAVEL_ID)
+VALUES ('Geografia', 60, NULL); -- Sem professor responsável ainda
+
+
+-- Inserção de dados na tabela TURMAS
+INSERT INTO TURMAS (ANO_LETIVO, SERIE, TURNO, PROFESSOR_ID, NUMERO_ALUNOS)
+VALUES (2025, '1º Ano', 'M', 1, 25); -- Professor Carlos Souza (Matemática) - ID 1
+
+INSERT INTO TURMAS (ANO_LETIVO, SERIE, TURNO, PROFESSOR_ID, NUMERO_ALUNOS)
+VALUES (2025, '2º Ano', 'T', 2, 30); -- Professor Ana Costa (Português) - ID 2
+
+INSERT INTO TURMAS (ANO_LETIVO, SERIE, TURNO, PROFESSOR_ID, NUMERO_ALUNOS)
+VALUES (2025, '3º Ano', 'N', 3, 28); -- Professor Ricardo Almeida (História) - ID 3
+
+INSERT INTO TURMAS (ANO_LETIVO, SERIE, TURNO, PROFESSOR_ID, NUMERO_ALUNOS)
+VALUES (2025, '1º Ano', 'T', 4, 22); -- Professor Mariana Lima (Ciências) - ID 4
+
+INSERT INTO TURMAS (ANO_LETIVO, SERIE, TURNO, PROFESSOR_ID, NUMERO_ALUNOS)
+VALUES (2025, '2º Ano', 'M', 1, 27); -- Professor Carlos Souza (Matemática) - ID 5
+
+
+-- Inserção de dados na tabela NOTAS (agora com DISCIPLINA_ID)
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, DISCIPLINA_ID, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (1, 1, 1, 8.5, 7.2, 9.0, 6.8, 7.87); -- João Silva, Turma 1, Matemática (ID 1)
+
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, DISCIPLINA_ID, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (2, 2, 2, 9.0, 8.5, 7.8, 8.2, 8.37); -- Maria Oliveira, Turma 2, Português (ID 2)
+
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, DISCIPLINA_ID, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (3, 3, 3, 7.5, 8.0, 7.2, 6.5, 7.30); -- Lucas Pereira, Turma 3, História (ID 3)
+
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, DISCIPLINA_ID, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (4, 1, 1, 7.0, 6.5, 8.0, 7.5, 7.25); -- Ana Souza, Turma 1, Matemática (ID 1)
+
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, DISCIPLINA_ID, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (5, 2, 2, 6.0, 7.0, 6.5, 7.2, 6.67); -- Pedro Santos, Turma 2, Português (ID 2)
+
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, DISCIPLINA_ID, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (1, 4, 4, 9.2, 8.8, 9.5, 9.0, 9.12); -- João Silva, Turma 4, Ciências (ID 4)
+
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, DISCIPLINA_ID, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (3, 5, 1, 6.0, 5.5, 7.0, 6.5, 6.25); -- Lucas Pereira, Turma 5, Matemática (ID 1)
+
+-- Exemplos de DDL/DML adicionais
+-- Adicionar uma coluna (já adicionada na criação da tabela ALUNOS, mas para exemplo)
+-- ALTER TABLE ALUNOS ADD TELEFONE VARCHAR2(20) DEFAULT 'Não informado';
+
+-- Atualizar um registro
+UPDATE ALUNOS
+SET TELEFONE = '81 99999-9999'
+WHERE Upper(NOME) = 'JOÃO SILVA';
+
+-- Consultar todos os alunos
+SELECT * FROM ALUNOS;
+
+-- Truncar uma tabela (remove todos os dados, mas mantém a estrutura)
+-- TRUNCATE TABLE ALUNOS;
+
+-- Dropar uma tabela (remove a tabela e seus dados)
+-- DROP TABLE ALUNOS;
+
+-- Dropar tabelas com CASCADE CONSTRAINTS (remove chaves estrangeiras dependentes)
+-- DROP TABLE ALUNOS CASCADE CONSTRAINTS;
+-- DROP TABLE PROFESSORES CASCADE CONSTRAINTS;
+-- DROP TABLE TURMAS CASCADE CONSTRAINTS;
+-- DROP TABLE NOTAS CASCADE CONSTRAINTS;
+          </code></pre>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h2>1️⃣ Modificando a Estrutura: <code>ALTER TABLE</code> <i class="fas fa-table"></i></h2>
+        <blockquote>
+          <p>O comando <code>ALTER TABLE</code> permite modificar a estrutura de uma tabela existente. Você pode
+            adicionar, modificar ou remover colunas, e adicionar ou remover restrições, além de outras operações.</p>
+        </blockquote>
+        <div class="card">
+          <h3>1.1. Adicionar uma Coluna</h3>
+          <p>Adiciona uma nova coluna à tabela. Você pode definir seu tipo de dado e outras propriedades.</p>
+          <pre><code class="language-sql">
+-- Adicionar uma coluna 'ENDERECO' à tabela ALUNOS
+ALTER TABLE ALUNOS
+ADD ENDERECO VARCHAR2(255);
+          </code></pre>
+          <p>Você também pode adicionar uma coluna com um valor padrão, que será aplicado a todas as linhas existentes e
+            novas inserções, a menos que um valor explícito seja fornecido.</p>
+          <pre><code class="language-sql">
+-- Adicionar uma coluna 'TIPO_SANGUINEO' à tabela ALUNOS com valor padrão
+ALTER TABLE ALUNOS
+ADD TIPO_SANGUINEO VARCHAR2(3) DEFAULT 'N/A';
+          </code></pre>
+
+          <h3>1.2. Modificar uma Coluna</h3>
+          <p>Permite alterar o tipo de dado, tamanho ou restrições de uma coluna existente. Note que em Oracle, usa-se
+            <code>MODIFY</code>.
+          </p>
+          <pre><code class="language-sql">
+-- Para Oracle, use MODIFY para aumentar o tamanho do EMAIL e torná-lo NOT NULL
+ALTER TABLE ALUNOS
+MODIFY EMAIL VARCHAR2(500) NOT NULL;
+          </code></pre>
+          <p><strong>Observações:</strong></p>
+          <ul>
+            <li>Você pode aumentar o tamanho de uma coluna <code>VARCHAR2</code> ou <code>CHAR</code> sem problemas.
+            </li>
+            <li>Diminuir o tamanho de uma coluna ou alterar seu tipo de dado pode causar erros (exceções) se houver
+              dados existentes que violem a nova definição. Por exemplo, se você tentar diminuir o tamanho de um
+              <code>VARCHAR2(100)</code> para <code>VARCHAR2(50)</code> e houver valores com mais de 50 caracteres, a
+              operação falhará.
+            </li>
+            <li>Adicionar a restrição <code>NOT NULL</code> a uma coluna que já contém valores <code>NULL</code>
+              resultará em erro, a menos que você atualize as linhas existentes para que essa coluna não seja nula antes
+              de modificar a restrição.</li>
+          </ul>
+
+          <h3>1.3. Remover uma Coluna</h3>
+          <p>Remove uma coluna da tabela e todos os dados contidos nela. Esta operação é geralmente irreversível.</p>
+          <pre><code class="language-sql">
+-- Remover a coluna 'TELEFONE' da tabela ALUNOS (se ela não for mais necessária)
+ALTER TABLE ALUNOS
+DROP COLUMN TELEFONE;
+          </code></pre>
+          <p><strong>Observações importantes ao remover colunas:</strong></p>
+          <ul>
+            <li>Em alguns bancos de dados (como Oracle), a remoção é lógica inicialmente e a coluna é marcada para
+              exclusão. Em outros, a remoção é imediata.</li>
+            <li>Se a coluna tiver restrições (como <code>PRIMARY KEY</code> ou <code>UNIQUE</code>) ou se outras colunas
+              ou objetos dependerem dela (como <code>FOREIGN KEY</code>s), você pode precisar usar a cláusula
+              <code>CASCADE CONSTRAINTS</code> para remover as dependências automaticamente, ou remover as dependências
+              manualmente primeiro.
+            </li>
+            <li><strong>Cuidado:</strong> Se a coluna contiver dados, eles serão perdidos. Certifique-se de que a coluna
+              não é mais necessária antes de removê-la.</li>
+          </ul>
+
+          <h3>1.4. Adicionar Restrição (Constraint)</h3>
+          <p>Adiciona uma regra de integridade à tabela, como <code>UNIQUE</code>, <code>PRIMARY KEY</code>,
+            <code>FOREIGN KEY</code> ou <code>CHECK</code>.
+          </p>
+          <pre><code class="language-sql">
+-- Adicionar uma restrição UNIQUE para garantir que os emails dos professores sejam únicos
+ALTER TABLE PROFESSORES
+ADD CONSTRAINT UK_PROF_EMAIL UNIQUE (EMAIL);
+
+-- Adicionar uma restrição CHECK para garantir que o SALARIO do professor seja positivo
+ALTER TABLE PROFESSORES
+ADD CONSTRAINT CK_PROF_SALARIO_POS CHECK (SALARIO > 0);
+
+-- Adicionar uma chave estrangeira à tabela TURMAS para a nova tabela DISCIPLINAS (exemplo)
+ALTER TABLE TURMAS
+ADD DISCIPLINA_PRINCIPAL_ID NUMBER;
+
+ALTER TABLE TURMAS
+ADD CONSTRAINT FK_TURMA_DISC FOREIGN KEY (DISCIPLINA_PRINCIPAL_ID) REFERENCES DISCIPLINAS (ID);
+          </code></pre>
+
+          <h3>1.5. Remover Restrição (Constraint)</h3>
+          <p>Remove uma regra de integridade existente da tabela.</p>
+          <pre><code class="language-sql">
+-- Remover a restrição UNIQUE de email dos professores
+ALTER TABLE PROFESSORES
+DROP CONSTRAINT UK_PROF_EMAIL;
+          </code></pre>
+
+          <h3>1.6. Renomear uma Tabela</h3>
+          <p>Altera o nome de uma tabela existente no banco de dados.</p>
+          <pre><code class="language-sql">
+-- Renomear a tabela ALUNOS para ESTUDANTES
+ALTER TABLE ALUNOS
+RENAME TO ESTUDANTES;
+
+-- Em Oracle, também é comum usar:
+-- RENAME ALUNOS TO ESTUDANTES;
+          </code></pre>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h2>2️⃣ Removendo Objetos e Dados: <code>DROP</code> e <code>TRUNCATE</code> <i class="fas fa-trash-alt"></i>
+        </h2>
+        <blockquote>
+          <p>Esses comandos são usados para remover tabelas, dados ou outros objetos do banco de dados. É crucial
+            entender a diferença e as implicações de cada um.</p>
+        </blockquote>
+        <div class="card">
+          <h3>2.1. <code>DROP TABLE</code>: Remover Tabela Completa</h3>
+          <p>Remove a definição da tabela (estrutura), todos os seus dados, índices, triggers e restrições associadas. É
+            uma operação DDL e, portanto, <strong>irreversível</strong> (não pode ser desfeita com <code>ROLLBACK</code>
+            em bancos de dados como Oracle, a menos que você use `FLASHBACK` ou tenha um backup).</p>
+          <pre><code class="language-sql">
+-- Remover a tabela NOTAS e todas as suas restrições dependentes
+DROP TABLE NOTAS CASCADE CONSTRAINTS;
+          </code></pre>
+          <p>A cláusula <code>CASCADE CONSTRAINTS</code> é importante porque se outras tabelas tiverem chaves
+            estrangeiras (<code>FOREIGN KEY</code>s) que referenciam a tabela que você está tentando dropar, o comando
+            falhará a menos que você as remova primeiro, ou use <code>CASCADE CONSTRAINTS</code> para removê-las
+            automaticamente.</p>
+
+          <h3>2.2. <code>TRUNCATE TABLE</code>: Remover Todos os Dados de uma Tabela</h3>
+          <p>Remove todas as linhas de uma tabela de forma rápida e eficiente, liberando o espaço de armazenamento
+            ocupado pelos dados. É um comando DDL e, assim como <code>DROP</code>, <strong>não pode ser desfeito com
+              <code>ROLLBACK</code></strong>. Mantém a estrutura da tabela, índices e restrições.</p>
+          <pre><code class="language-sql">
+-- Remover todos os dados da tabela NOTAS
+TRUNCATE TABLE NOTAS;
+          </code></pre>
+          <p><strong>Diferenças Chave entre `DELETE`, `TRUNCATE` e `DROP`:</strong></p>
+          <ul>
+            <li><strong>`DELETE` (DML):</strong> Remove linhas individualmente. Pode ser filtrado com `WHERE`. É mais
+              lento para grandes volumes. Pode ser desfeito com `ROLLBACK`. Gera `UNDO` e `REDO` logs para cada linha,
+              permitindo recuperação. Dispara triggers `DELETE`.</li>
+            <li><strong>`TRUNCATE` (DDL):</strong> Remove todas as linhas de uma tabela de forma muito rápida. Não pode
+              ser filtrado com `WHERE`. Não pode ser desfeito com `ROLLBACK`. Reseta colunas `AUTO_INCREMENT`/`IDENTITY`
+              (dependendo do SGBD). Não dispara triggers `DELETE` (pode ter triggers `ON TRUNCATE` em alguns SGBDs).
+            </li>
+            <li><strong>`DROP TABLE` (DDL):</strong> Remove a tabela completa (estrutura e dados). Não pode ser desfeito
+              com `ROLLBACK`. Libera todo o espaço ocupado pela tabela.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h2>3️⃣ Otimização: Índices <i class="fas fa-fingerprint"></i></h2>
+        <blockquote>
+          <p>Índices são objetos de banco de dados que melhoram a velocidade de recuperação de dados em tabelas. Eles
+            funcionam de forma semelhante a um índice de livro, permitindo que o banco de dados encontre rapidamente as
+            linhas relevantes sem ter que escanear a tabela inteira.</p>
+        </blockquote>
+        <div class="card">
+          <h3>3.1. <code>CREATE INDEX</code>: Criar um Índice</h3>
+          <p>Cria um índice em uma ou mais colunas de uma tabela. Isso acelera as operações de busca e ordenação que
+            usam essas colunas, mas pode desacelerar `INSERT`, `UPDATE` e `DELETE` pois o índice precisa ser mantido
+            atualizado.</p>
+          <pre><code class="language-sql">
+-- Criar um índice na coluna NOME da tabela ALUNOS para acelerar buscas por nome
+CREATE INDEX IDX_ALUNOS_NOME ON ALUNOS (NOME);
+
+-- Criar um índice composto em ALUNO_ID e DISCIPLINA_ID na tabela NOTAS
+-- Isso é útil para consultas que filtram ou ordenam por ambas as colunas.
+CREATE INDEX IDX_NOTAS_ALUNO_DISCIPLINA ON NOTAS (ALUNO_ID, DISCIPLINA_ID);
+
+-- Criar um índice UNIQUE para garantir a unicidade dos emails dos alunos (além de acelerar buscas)
+CREATE UNIQUE INDEX UK_ALUNOS_EMAIL ON ALUNOS (EMAIL);
+          </code></pre>
+
+          <h3>3.2. <code>DROP INDEX</code>: Remover um Índice</h3>
+          <p>Remove um índice existente. Isso pode ser feito para liberar espaço ou se o índice não estiver mais
+            otimizando o desempenho como esperado.</p>
+          <pre><code class="language-sql">
+-- Remover o índice IDX_ALUNOS_NOME
+DROP INDEX IDX_ALUNOS_NOME;
+          </code></pre>
+          <p><strong>Quando usar índices?</strong></p>
+          <ul>
+            <li>Em colunas frequentemente usadas em cláusulas `WHERE`, `JOIN` ou `ORDER BY`.</li>
+            <li>Em colunas com alta cardinalidade (muitos valores distintos).</li>
+            <li>Em chaves primárias e chaves estrangeiras (muitas vezes, índices são criados automaticamente para PKs).
+            </li>
+          </ul>
+          <p><strong>Quando evitar índices excessivos?</strong></p>
+          <ul>
+            <li>Índices ocupam espaço em disco.</li>
+            <li>Operações de `INSERT`, `UPDATE` e `DELETE` podem se tornar mais lentas, pois o banco de dados precisa
+              atualizar os índices após cada modificação.</li>
+            <li>Em tabelas pequenas, o custo de usar um índice pode ser maior do que o benefício.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h2>4️⃣ Geração de Números Únicos: Sequences <i class="fas fa-sort-numeric-up-alt"></i></h2>
+        <blockquote>
+          <p>Sequences são objetos de banco de dados que geram automaticamente sequências de números únicos e crescentes
+            (ou decrescentes), frequentemente usados para preencher chaves primárias ou outras colunas que exigem
+            valores únicos. Eles garantem a unicidade dos valores mesmo em ambientes multiusuário.</p>
+        </blockquote>
+        <div class="card">
+          <h3>4.1. <code>CREATE SEQUENCE</code>: Criar uma Sequence</h3>
+          <p>Define uma nova sequência com suas propriedades iniciais, como valor de início, incremento, cache, ciclo,
+            etc.</p>
+          <pre><code class="language-sql">
+-- Criar uma sequence para IDs de novas disciplinas
+CREATE SEQUENCE SEQ_DISCIPLINAS_ID
+START WITH 10         -- O primeiro número gerado será 10
+INCREMENT BY 1        -- Cada número subsequente será incrementado em 1
+NOCACHE               -- Não armazena números em cache na memória
+NOCYCLE               -- Não recicla os números
+ORDER;                -- Garante que os números são gerados em ordem crescente
+          </code></pre>
+          <p>Para usar a sequence em um `INSERT`:</p>
+          <pre><code class="language-sql">
+-- Inserir uma nova disciplina usando a sequence
+INSERT INTO DISCIPLINAS (ID, NOME_DISCIPLINA, CARGA_HORARIA, PROFESSOR_RESPONSAVEL_ID)
+VALUES (SEQ_DISCIPLINAS_ID.NEXTVAL, 'Filosofia', 50, NULL); -- Sem professor responsável ainda
+
+COMMIT;
+
+-- Para ver o valor atual da sequence (o último valor alocado)
+-- SELECT SEQ_DISCIPLINAS_ID.CURRVAL FROM DUAL;
+          </code></pre>
+
+          <h3>4.2. <code>ALTER SEQUENCE</code>: Modificar uma Sequence</h3>
+          <p>Altera as propriedades de uma sequência existente. Você pode mudar o incremento, valor máximo, etc., mas
+            não o `START WITH` (para isso, você precisaria dropar e recriar).</p>
+          <pre><code class="language-sql">
+-- Alterar o incremento da sequence de disciplinas para 2
+ALTER SEQUENCE SEQ_DISCIPLINAS_ID
+INCREMENT BY 2;
+          </code></pre>
+
+          <h3>4.3. <code>DROP SEQUENCE</code>: Remover uma Sequence</h3>
+          <p>Remove uma sequência do banco de dados. Os valores gerados por ela não poderão mais ser acessados.</p>
+          <pre><code class="language-sql">
+-- Remover a sequence de disciplinas
+DROP SEQUENCE SEQ_DISCIPLINAS_ID;
+          </code></pre>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h2>5️⃣ Entendendo Erros e Exceções em DDL <i class="fas fa-exclamation-triangle"></i></h2>
+        <blockquote>
+          <p>No contexto de DDL (Data Definition Language), uma <strong>exceção</strong> é um evento que interrompe o
+            fluxo normal de execução de uma instrução SQL. Em termos mais simples, é um "erro" que ocorre quando o banco
+            de dados não consegue completar a operação DDL solicitada. Essas exceções podem ser causadas por diversas
+            razões, como violação de restrições, objetos inexistentes, sintaxe inválida, ou dependências não resolvidas.
+          </p>
+        </blockquote>
+        <div class="card">
+          <p>Diferente de operações DML (como <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>), que podem
+            ser revertidas com <code>ROLLBACK</code> em caso de erro, operações DDL são auto-commit. Isso significa que,
+            se uma parte de uma instrução DDL for bem-sucedida, essa parte é imediatamente confirmada no banco de dados,
+            e a operação completa é considerada uma única transação. Se uma exceção ocorrer durante uma instrução DDL,
+            toda a instrução falha e é revertida (em termos da própria instrução), mas alterações DDL anteriores (se a
+            instrução fosse parte de um script maior) não são automaticamente revertidas.</p>
+          <p><strong>Exemplos de como exceções podem ocorrer em DDL:</strong></p>
+          <ul>
+            <li><strong>Violação de Restrição:</strong> Tentar adicionar uma coluna `NOT NULL` a uma tabela que já
+              possui dados e onde essa coluna tem valores `NULL`.</li>
+            <pre><code class="language-sql">
+-- Exemplo de erro (se a tabela ALUNOS já tiver linhas com TELEFONE nulo, e você tentar adicionar NOT NULL)
+ALTER TABLE ALUNOS MODIFY TELEFONE VARCHAR2(20) NOT NULL;
+-- ORA-01449: column contains NULL values; cannot alter to NOT NULL
+            </code></pre>
+            <li><strong>Objeto Inexistente:</strong> Tentar remover uma tabela ou índice que não existe.</li>
+            <pre><code class="language-sql">
+DROP TABLE TABELA_INEXISTENTE;
+-- ORA-00942: table or view does not exist
+            </code></pre>
+            <li><strong>Dependência não Resolvida:</strong> Tentar dropar uma tabela que é referenciada por uma chave
+              estrangeira em outra tabela sem usar `CASCADE CONSTRAINTS`.</li>
+            <pre><code class="language-sql">
+-- Assumindo que NOTAS tem uma FK para ALUNOS
+DROP TABLE ALUNOS;
+-- ORA-02449: unique/primary keys in table referenced by foreign keys
+            </code></pre>
+          </ul>
+          <p>Quando uma exceção ocorre em uma instrução DDL, o SGBD geralmente para a execução daquela instrução e
+            retorna uma mensagem de erro. Em PL/SQL, você pode capturar e tratar exceções DDL usando blocos
+            <code>EXCEPTION</code>, permitindo um controle mais refinado sobre o fluxo do script.
+          </p>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <h2>Exercícios e Desafios <i class="fas fa-question-circle"></i></h2>
+        <p>Para solidificar seu aprendizado, tente resolver os seguintes desafios:</p>
+        <div class="card">
+          <ol class="padding-r-10">
+            <li>
+              Crie uma tabela <code>DISCIPLINAS_NOVAS (id PK, nome VARCHAR2(100), carga_horaria NUMBER)</code>.
+              Em seguida, adicione uma nova coluna <code>professor_responsavel_id</code> do tipo <code>NUMBER</code> a
+              esta tabela.
+              Adicione uma chave estrangeira nesta nova coluna referenciando a tabela <code>PROFESSORES (ID)</code>.
+              Altere a coluna <code>nome</code> para ter no máximo 200 caracteres e ser `NOT NULL`.
+              Finalmente, renomeie a tabela de <code>DISCIPLINAS_NOVAS</code> para <code>MATERIAS_ESCOLARES</code>.
+              <button onclick="toggleAnswer('ansEx1')">Mostrar Gabarito</button>
+              <div class="answer" id="ansEx1">
+                <pre><code class="language-sql">
+-- 1. Criar a tabela DISCIPLINAS_NOVAS (se não existir)
+CREATE TABLE DISCIPLINAS_NOVAS (
+    ID NUMBER PRIMARY KEY,
+    NOME VARCHAR2(100),
+    CARGA_HORARIA NUMBER
+);
+
+-- 2. Adicionar a coluna professor_responsavel_id
+ALTER TABLE DISCIPLINAS_NOVAS
+ADD PROFESSOR_RESPONSAVEL_ID NUMBER;
+
+-- 3. Adicionar a chave estrangeira
+ALTER TABLE DISCIPLINAS_NOVAS
+ADD CONSTRAINT FK_PROF_DISC_NOVAS FOREIGN KEY (PROFESSOR_RESPONSAVEL_ID) REFERENCES PROFESSORES (ID);
+
+-- 4. Modificar a coluna nome
+ALTER TABLE DISCIPLINAS_NOVAS
+MODIFY NOME VARCHAR2(200) NOT NULL;
+
+-- 5. Renomear a tabela
+ALTER TABLE DISCIPLINAS_NOVAS
+RENAME TO MATERIAS_ESCOLARES;
+
+-- Para verificar as alterações
+-- DESC MATERIAS_ESCOLARES;
+-- SELECT * FROM MATERIAS_ESCOLARES;
+                </code></pre>
+              </div>
+            </li>
+            <li>
+              Crie uma sequence chamada <code>SEQ_TURMAS_ID_NOVO</code> que comece em 100, incremente de 2 em 2, e
+              não tenha cache.
+              Use esta sequence para inserir dois registros em uma tabela
+              <code>TURMAS_NOVAS (id PK, ano_letivo NUMBER, serie VARCHAR2(20))</code>.
+              <button onclick="toggleAnswer('ansEx2')">Mostrar Gabarito</button>
+              <div class="answer" id="ansEx2">
+                <pre><code class="language-sql">
+-- 1. Criar a tabela TURMAS_NOVAS (se não existir)
+CREATE TABLE TURMAS_NOVAS (
+    ID NUMBER PRIMARY KEY,
+    ANO_LETIVO NUMBER(4),
+    SERIE VARCHAR2(20)
+);
+
+-- 2. Criar a sequence
+CREATE SEQUENCE SEQ_TURMAS_ID_NOVO
+START WITH 100
+INCREMENT BY 2
+NOCACHE
+NOCYCLE;
+
+-- 3. Inserir registros usando a sequence
+INSERT INTO TURMAS_NOVAS (ID, ANO_LETIVO, SERIE)
+VALUES (SEQ_TURMAS_ID_NOVO.NEXTVAL, 2026, '4º Ano');
+
+INSERT INTO TURMAS_NOVAS (ID, ANO_LETIVO, SERIE)
+VALUES (SEQ_TURMAS_ID_NOVO.NEXTVAL, 2026, '5º Ano');
+
+COMMIT;
+
+-- Verificar as turmas inseridas
+-- SELECT * FROM TURMAS_NOVAS;
+                </code></pre>
+              </div>
+            </li>
+            <li>
+              <p><strong>Nova Tabela: Relacionamento Aluno-Disciplina (Matrículas em Disciplinas)</strong></p>
+              <p>Crie uma tabela <code>MATRICULAS_DISCIPLINAS</code> para registrar quais alunos estão matriculados em
+                quais disciplinas. Esta tabela deve ter:</p>
+              <ul>
+                <li><code>ID</code> (chave primária, auto-incremento)</li>
+                <li><code>ALUNO_ID</code> (chave estrangeira para ALUNOS)</li>
+                <li><code>DISCIPLINA_ID</code> (chave estrangeira para DISCIPLINAS)</li>
+                <li><code>DATA_MATRICULA</code> (data da matrícula)</li>
+                <li>Uma restrição de unicidade para garantir que um aluno não possa se matricular na mesma disciplina
+                  mais de uma vez.</li>
+              </ul>
+              <p>Insira alguns dados de exemplo nesta nova tabela.</p>
+              <button onclick="toggleAnswer('ansEx3')">Mostrar Gabarito</button>
+              <div class="answer" id="ansEx3">
+                <pre><code class="language-sql">
+-- Criação da tabela MATRICULAS_DISCIPLINAS
+CREATE TABLE MATRICULAS_DISCIPLINAS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    ALUNO_ID NUMBER NOT NULL,
+    DISCIPLINA_ID NUMBER NOT NULL,
+    DATA_MATRICULA DATE DEFAULT SYSDATE,
+    CONSTRAINT FK_MATRICULA_ALUNO FOREIGN KEY (ALUNO_ID) REFERENCES ALUNOS (ID),
+    CONSTRAINT FK_MATRICULA_DISC FOREIGN KEY (DISCIPLINA_ID) REFERENCES DISCIPLINAS (ID),
+    CONSTRAINT UK_ALUNO_DISCIPLINA UNIQUE (ALUNO_ID, DISCIPLINA_ID)
+);
+
+-- Inserção de dados de exemplo
+INSERT INTO MATRICULAS_DISCIPLINAS (ALUNO_ID, DISCIPLINA_ID, DATA_MATRICULA)
+VALUES (1, 1, TO_DATE('2024-02-15', 'YYYY-MM-DD')); -- João Silva em Matemática
+INSERT INTO MATRICULAS_DISCIPLINAS (ALUNO_ID, DISCIPLINA_ID, DATA_MATRICULA)
+VALUES (1, 4, TO_DATE('2024-02-15', 'YYYY-MM-DD')); -- João Silva em Ciências
+INSERT INTO MATRICULAS_DISCIPLINAS (ALUNO_ID, DISCIPLINA_ID, DATA_MATRICULA)
+VALUES (2, 2, TO_DATE('2024-02-15', 'YYYY-MM-DD')); -- Maria Oliveira em Português
+INSERT INTO MATRICULAS_DISCIPLINAS (ALUNO_ID, DISCIPLINA_ID, DATA_MATRICULA)
+VALUES (3, 3, TO_DATE('2024-02-15', 'YYYY-MM-DD')); -- Lucas Pereira em História
+INSERT INTO MATRICULAS_DISCIPLINAS (ALUNO_ID, DISCIPLINA_ID, DATA_MATRICULA)
+VALUES (4, 1, TO_DATE('2024-02-15', 'YYYY-MM-DD')); -- Ana Souza em Matemática
+
+COMMIT;
+
+-- Exemplo de consulta usando a nova tabela
+SELECT
+    a.NOME AS Aluno,
+    d.NOME_DISCIPLINA AS Disciplina,
+    md.DATA_MATRICULA
+FROM
+    ALUNOS a
+JOIN
+    MATRICULAS_DISCIPLINAS md ON a.ID = md.ALUNO_ID
+JOIN
+    DISCIPLINAS d ON md.DISCIPLINA_ID = d.ID
+ORDER BY
+    Aluno, Disciplina;
+                    </code></pre>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Function to load the menu
+      function loadMenu() {
+        fetch('/menu.html')
+          .then(response => response.text())
+          .then(data => {
+            document.getElementById('menu-placeholder').innerHTML = data;
+            initializeSidebar(); // Initialize sidebar functionality after loading menu
+          })
+          .catch(error => console.error('Error loading menu:', error));
+      }
+      function initializeSidebar() {
+        const hamburgerMenu = document.getElementById('hamburger-menu');
+        const sidebar = document.getElementById('sidebar');
+        const content = document.getElementById('content');
+        const overlay = document.getElementById('overlay');
+        const sidebarLinks = sidebar.querySelectorAll('a');
+
+        function toggleSidebar() {
+          sidebar.classList.toggle('active');
+          content.classList.toggle('sidebar-active');
+          overlay.classList.toggle('active');
+        }
+
+        hamburgerMenu.addEventListener('click', toggleSidebar);
+        overlay.addEventListener('click', toggleSidebar);
+
+        sidebarLinks.forEach(link => {
+          link.addEventListener('click', function () {
+            if (sidebar.classList.contains('active')) {
+              toggleSidebar();
+            }
+          });
+        });
+
+        function highlightActiveLink() {
+          const currentPath = window.location.pathname.split('/').pop();
+          sidebarLinks.forEach(link => {
+            const linkPath = link.getAttribute('href');
+            if (linkPath === currentPath || (currentPath === '' && linkPath === 'index.html')) {
+              link.classList.add('active');
+            } else {
+              link.classList.remove('active');
+            }
+          });
+        }
+
+        highlightActiveLink();
+      }
+
+      // Load the menu when the DOM is ready
+      loadMenu();
+
+      window.toggleAnswer = function (id) {
+        var x = document.getElementById(id);
+        if (x.style.display === "none" || x.style.display === "") {
+          x.style.display = "block";
+        } else {
+          x.style.display = "none";
+        }
+      };
+    });
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+</body>
+
+</html>

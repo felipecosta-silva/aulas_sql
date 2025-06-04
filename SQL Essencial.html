@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Essencial - DDL, DML, DQL (Oracle)</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+        /* Adicionando padding aos blocos de código para melhor visualização */
+        pre[class*="language-"] {
+            padding: 1em;
+            margin: .5em 0;
+            overflow: auto;
+            border-radius: 0.3em;
+        }
+
+        /* Highlight active sidebar link */
+        .sidebar a.active {
+            background-color: #0056b3;
+            /* Or any color that indicates active state */
+            color: white;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="menu-placeholder"></div>
+
+    <div class="content" id="content">
+        <header>
+            <h1>SQL Essencial: DDL, DML, DQL com Oracle</h1>
+            <p>Aprenda os comandos fundamentais do SQL para definir, manipular e consultar dados em um ambiente Oracle.
+                Domine a criação de tabelas, inserção, atualização, exclusão e seleção de informações.</p>
+        </header>
+
+        <div class="main-section">
+
+            <div class="sub-section">
+                <h2>1️⃣ Linguagem de Definição de Dados (DDL) <i class="fas fa-cogs"></i></h2>
+                <p>DDL (Data Definition Language) é usada para definir e modificar a estrutura de objetos do banco de
+                    dados, como tabelas, índices e views. Essas operações são normalmente irreversíveis por `ROLLBACK` e
+                    causam um `COMMIT` implícito.</p>
+
+                <h3>1.1. Tipos de Dados Essenciais no Oracle <i class="fas fa-info-circle"></i></h3>
+                <p>A escolha correta do tipo de dado é crucial para a performance, armazenamento e integridade dos dados
+                    em seu banco de dados Oracle. Abaixo, alguns dos tipos de dados mais comuns:</p>
+                <div class="card">
+                    <ul>
+                        <li><strong>`NUMBER(p, s)`:</strong> Para números, onde `p` é a precisão total (número total de
+                            dígitos) e `s` é a escala (número de dígitos à direita da vírgula decimal).
+                            <ul>
+                                <li>Ex: `NUMBER(5)` (inteiro de até 5 dígitos), `NUMBER(10,2)` (até 10 dígitos, 2
+                                    decimais).</li>
+                                <li>Ideal para IDs, quantidades, preços.</li>
+                            </ul>
+                        </li>
+                        <li><strong>`VARCHAR2(size)`:</strong> Para strings de caracteres de comprimento variável.
+                            `size` define o tamanho máximo em bytes ou caracteres.
+                            <ul>
+                                <li>Ex: `VARCHAR2(100)` (texto de até 100 caracteres).</li>
+                                <li>Preferível ao `VARCHAR` no Oracle, pois o `VARCHAR` pode ter comportamentos
+                                    inesperados.</li>
+                            </ul>
+                        </li>
+                        <li><strong>`CHAR(size)`:</strong> Para strings de caracteres de comprimento fixo. Se a string
+                            for menor que `size`, será preenchida com espaços em branco.
+                            <ul>
+                                <li>Ex: `CHAR(10)` (sempre ocupa 10 caracteres, mesmo que o valor seja menor).</li>
+                                <li>Usado para dados com comprimento fixo garantido, como códigos de status de 2 letras.
+                                </li>
+                            </ul>
+                        </li>
+                        <li><strong>`DATE`:</strong> Armazena valores de data e hora (século, ano, mês, dia, hora,
+                            minuto e segundo).
+                            <ul>
+                                <li>Ideal para datas de nascimento, datas de cadastro, etc.</li>
+                            </ul>
+                        </li>
+                        <li><strong>`TIMESTAMP`:</strong> Extensão do `DATE` que armazena frações de segundo.
+                            <ul>
+                                <li>Ex: `TIMESTAMP(6)` (até 6 casas decimais para segundos).</li>
+                                <li>Útil quando a precisão de tempo é crítica (logs de eventos, transações rápidas).
+                                </li>
+                            </ul>
+                        </li>
+                        <li><strong>`CLOB`:</strong> Para armazenar grandes blocos de dados de caracteres (texto longo,
+                            até 4 GB).
+                            <ul>
+                                <li>Ex: `CLOB` (para descrições longas, artigos, conteúdo de livros).</li>
+                                <li>Melhor para dados de texto grandes que não cabem em `VARCHAR2`.</li>
+                            </ul>
+                        </li>
+                        <li><strong>`BLOB`:</strong> Para armazenar grandes blocos de dados binários (imagens, vídeos,
+                            documentos, até 4 GB).
+                            <ul>
+                                <li>Ex: `BLOB` (para arquivos multimídia, PDFs).</li>
+                                <li>Ideal para dados que não são interpretados como texto.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+
+                <h3>1.2. Constraints (Restrições): Garantindo a Integridade dos Dados <i class="fas fa-lock"></i></h3>
+                <p>Constraints são regras aplicadas às colunas de uma tabela para limitar o tipo de dado que pode ser
+                    inserido. Elas garantem a precisão, confiabilidade e integridade dos dados no banco de dados.</p>
+
+                <h4>Tipos de Constraints e Exemplos:</h4>
+
+                <div class="card">
+                    <h5>a) `PRIMARY KEY` (Chave Primária) <i class="fas fa-key"></i></h5>
+                    <p>Identifica unicamente cada registro em uma tabela. Garante que a coluna (ou conjunto de colunas)
+                        não contenha valores duplicados e não possa ter valores nulos (`NOT NULL` implícito).</p>
+                    <pre><code class="language-sql">
+CREATE TABLE ALUNOS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    NOME VARCHAR2(255) NOT NULL,
+    DATA_NASCIMENTO DATE NOT NULL,
+    TELEFONE VARCHAR2(20) DEFAULT 'Não informado',
+    SEXO VARCHAR2(1),
+    EMAIL VARCHAR2(255),
+    DATA_MATRIICULA DATE NOT NULL,
+    STATUS_MATRICULA VARCHAR2(20) CHECK (STATUS_MATRICULA IN ('Ativo', 'Transferido', 'Trancado'))
+);
+
+-- Inserção válida
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('João Silva', TO_DATE('2005/05/15', 'YYYY/MM/DD'), 'M', 'joao.silva@email.com', TO_DATE('2020-02-10', 'YYYY-MM-DD'), 'Ativo');
+
+-- Tentativa de inserir ID duplicado (Erro: ORA-00001: unique constraint violated)
+-- INSERT INTO ALUNOS (ID, NOME, DATA_NASCIMENTO, DATA_MATRIICULA, STATUS_MATRICULA) VALUES (1, 'Maria', TO_DATE('2004-07-21', 'YYYY-MM-DD'), TO_DATE('2019-03-01', 'YYYY-MM-DD'), 'Ativo');
+
+-- Tentativa de inserir ID nulo (Erro: ORA-01400: cannot insert NULL into ("SYS"."ALUNOS"."ID")) se não for GENERATED ALWAYS
+-- INSERT INTO ALUNOS (ID, NOME, DATA_NASCIMENTO, DATA_MATRIICULA, STATUS_MATRICULA) VALUES (NULL, 'Pedro', TO_DATE('2003-01-01', 'YYYY-MM-DD'), TO_DATE('2018-01-01', 'YYYY-MM-DD'), 'Ativo');
+                    </code></pre>
+                </div>
+
+                <div class="card">
+                    <h5>b) `FOREIGN KEY` (Chave Estrangeira) <i class="fas fa-link"></i></h5>
+                    <p>Cria um vínculo entre duas tabelas, garantindo que os valores em uma coluna de uma tabela
+                        (`FOREIGN KEY`) correspondam a valores existentes na `PRIMARY KEY` de outra tabela. Essencial
+                        para manter a integridade referencial em relacionamentos.</p>
+                    <pre><code class="language-sql">
+-- Tabela 'PROFESSORES'
+CREATE TABLE PROFESSORES (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    NOME VARCHAR2(150) NOT NULL,
+    ESPECIALIDADE VARCHAR2(100) NOT NULL,
+    DT_ADIMISSAO DATE NOT NULL,
+    TELEFONE VARCHAR2(20),
+    EMAIL VARCHAR2(150),
+    SALARIO NUMBER(10,2) NOT NULL
+);
+
+-- Tabela 'TURMAS' que referencia 'PROFESSORES'
+CREATE TABLE TURMAS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    ANO_LETIVO NUMBER(4) NOT NULL,
+    SERIE VARCHAR2(20) NOT NULL,
+    TURNO VARCHAR2(1) CHECK (TURNO IN('M','T','N')),
+    PROFESSOR_ID NUMBER,
+    NUMERO_ALUNOS NUMBER(3) CHECK (NUMERO_ALUNOS >= 2),
+    CONSTRAINT FK_PROFESSOR FOREIGN KEY (PROFESSOR_ID) REFERENCES PROFESSORES (ID)
+    ON DELETE SET NULL -- Opção: Se o professor for deletado, o professor_id nas turmas vira NULL
+);
+
+-- Inserção válida em Professores
+INSERT INTO PROFESSORES (NOME, ESPECIALIDADE, DT_ADIMISSAO, TELEFONE, EMAIL, SALARIO)
+VALUES ('Carlos Souza', 'Matemática', TO_DATE('2015-02-25', 'YYYY-MM-DD'), '99999-1234', 'carlos.souza@email.com', 3500.00);
+
+-- Inserção válida (professor_id 1 existe na tabela Professores)
+INSERT INTO TURMAS (ANO_LETIVO, SERIE, TURNO, PROFESSOR_ID, NUMERO_ALUNOS)
+VALUES (2025, '8º Ano', 'M', 1, 25);
+
+-- Tentativa de inserir professor_id que não existe (Erro: ORA-02291: integrity constraint violated - parent key not found)
+-- INSERT INTO TURMAS (ANO_LETIVO, SERIE, TURNO, PROFESSOR_ID, NUMERO_ALUNOS) VALUES (2025, '9º Ano', 'T', 999, 30);
+                    </code></pre>
+                    <p><span class="highlight-info"><strong>Ações para Chaves Estrangeiras:</strong></span>
+                    <ul>
+                        <li>`ON DELETE CASCADE`: Quando um registro na tabela pai é excluído, todos os registros
+                            correspondentes na tabela filha também são excluídos. **Use com extrema cautela!**</li>
+                        <li>`ON DELETE SET NULL`: Quando um registro na tabela pai é excluído, os valores da chave
+                            estrangeira nos registros correspondentes na tabela filha são definidos como `NULL`. (A
+                            coluna FK não pode ter `NOT NULL`).</li>
+                        <li>(Padrão) `ON DELETE RESTRICT` (ou sem cláusula): Impede a exclusão de um registro na tabela
+                            pai se houver registros correspondentes na tabela filha.</li>
+                    </ul>
+                    </p>
+                </div>
+
+                <div class="card">
+                    <h5>c) `UNIQUE` (Único) <i class="fas fa-tags"></i></h5>
+                    <p>Garante que todos os valores em uma coluna (ou conjunto de colunas) sejam únicos. Diferente da
+                        `PRIMARY KEY`, uma coluna `UNIQUE` pode conter valores nulos, mas apenas uma vez (no Oracle). É
+                        ideal para e-mails, CPFs, RGs.</p>
+                    <pre><code class="language-sql">
+CREATE TABLE ALUNOS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    NOME VARCHAR2(255) NOT NULL,
+    DATA_NASCIMENTO DATE NOT NULL,
+    TELEFONE VARCHAR2(20) DEFAULT 'Não informado',
+    SEXO VARCHAR2(1),
+    EMAIL VARCHAR2(255) UNIQUE, -- 'EMAIL' deve ser único
+    DATA_MATRIICULA DATE NOT NULL,
+    STATUS_MATRICULA VARCHAR2(20) CHECK (STATUS_MATRICULA IN ('Ativo', 'Transferido', 'Trancado'))
+);
+
+-- Inserção válida
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('João Silva', TO_DATE('2005/05/15', 'YYYY/MM/DD'), 'M', 'joao.silva@email.com', TO_DATE('2020-02-10', 'YYYY-MM-DD'), 'Ativo');
+
+-- Tentativa de inserir email duplicado (Erro: ORA-00001: unique constraint violated)
+-- INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA) VALUES ('Pedro Souza', TO_DATE('2006-03-20', 'YYYY-MM-DD'), 'joao.silva@email.com', TO_DATE('2021-02-15', 'YYYY-MM-DD'), 'Ativo');
+
+-- Inserção de NULL (válido, pois UNIQUE permite um valor NULL no Oracle, mas apenas um)
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, TELEFONE, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('Ana Paula', TO_DATE('2007-09-01', 'YYYY-MM-DD'), NULL, 'F', NULL, TO_DATE('2022-08-01', 'YYYY-MM-DD'), 'Ativo');
+
+-- Tentativa de inserir outro NULL (Erro: ORA-00001: unique constraint violated, no Oracle NULL é tratado como único)
+-- INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA) VALUES ('Carlos', TO_DATE('2008-01-01', 'YYYY-MM-DD'), NULL, TO_DATE('2023-01-01', 'YYYY-MM-DD'), 'Ativo');
+                    </code></pre>
+                </div>
+
+                <div class="card">
+                    <h5>d) `NOT NULL` (Não Nulo) <i class="fas fa-exclamation-circle"></i></h5>
+                    <p>Garante que uma coluna não possa conter valores nulos. Ou seja, um valor deve ser fornecido para
+                        esta coluna ao inserir ou atualizar um registro.</p>
+                    <pre><code class="language-sql">
+CREATE TABLE PROFESSORES (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    NOME VARCHAR2(150) NOT NULL, -- 'NOME' não pode ser nulo
+    ESPECIALIDADE VARCHAR2(100) NOT NULL, -- 'ESPECIALIDADE' não pode ser nulo
+    DT_ADIMISSAO DATE NOT NULL, -- 'DT_ADIMISSAO' não pode ser nulo
+    TELEFONE VARCHAR2(20),
+    EMAIL VARCHAR2(150),
+    SALARIO NUMBER(10,2) NOT NULL -- 'SALARIO' não pode ser nulo
+);
+
+-- Inserção válida
+INSERT INTO PROFESSORES (NOME, ESPECIALIDADE, DT_ADIMISSAO, SALARIO)
+VALUES ('Ana Costa', 'Português', TO_DATE('2017-06-10', 'YYYY-MM-DD'), 3000.00);
+
+-- Tentativa de inserir NOME nulo (Erro: ORA-01400: cannot insert NULL into ("SYS"."PROFESSORES"."NOME"))
+-- INSERT INTO PROFESSORES (NOME, ESPECIALIDADE, DT_ADIMISSAO, SALARIO) VALUES (NULL, 'Física', SYSDATE, 3200.00);
+                    </code></pre>
+                </div>
+
+                <div class="card">
+                    <h5>e) `CHECK` (Verificação) <i class="fas fa-check-square"></i></h5>
+                    <p>Define uma condição que deve ser verdadeira para que os dados sejam inseridos ou atualizados na
+                        coluna. Permite validar valores com base em uma expressão lógica.</p>
+                    <pre><code class="language-sql">
+CREATE TABLE ALUNOS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    NOME VARCHAR2(255) NOT NULL,
+    DATA_NASCIMENTO DATE NOT NULL,
+    TELEFONE VARCHAR2(20) DEFAULT 'Não informado',
+    SEXO VARCHAR2(1),
+    EMAIL VARCHAR2(255),
+    DATA_MATRIICULA DATE NOT NULL,
+    STATUS_MATRICULA VARCHAR2(20) CHECK (STATUS_MATRICULA IN ('Ativo', 'Transferido', 'Trancado')) -- 'STATUS_MATRICULA' deve ser um dos valores especificados
+);
+
+CREATE TABLE TURMAS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    ANO_LETIVO NUMBER(4) NOT NULL,
+    SERIE VARCHAR2(20) NOT NULL,
+    TURNO VARCHAR2(1) CHECK (TURNO IN('M','T','N')), -- 'TURNO' deve ser 'M', 'T' ou 'N'
+    PROFESSOR_ID NUMBER,
+    NUMERO_ALUNOS NUMBER(3) CHECK (NUMERO_ALUNOS >= 2), -- 'NUMERO_ALUNOS' deve ser >= 2
+    CONSTRAINT FK_PROFESSOR FOREIGN KEY (PROFESSOR_ID) REFERENCES PROFESSORES (ID)
+);
+
+-- Inserção válida em Alunos
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('João Silva', TO_DATE('2005-05-15', 'YYYY-MM-DD'), TO_DATE('2020-02-10', 'YYYY-MM-DD'), 'Ativo');
+
+-- Tentativa de inserir STATUS_MATRICULA inválido (Erro: ORA-02290: check constraint violated)
+-- INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, DATA_MATRIICULA, STATUS_MATRICULA) VALUES ('Roberta', TO_DATE('2006-01-01', 'YYYY-MM-DD'), SYSDATE, 'Inativo');
+
+-- Inserção válida em Turmas
+INSERT INTO TURMAS (ANO_LETIVO, SERIE, TURNO, NUMERO_ALUNOS) VALUES (2025, '7º Ano', 'M', 30);
+
+-- Tentativa de inserir TURNO inválido (Erro: ORA-02290: check constraint violated)
+-- INSERT INTO TURMAS (ANO_LETIVO, SERIE, TURNO, NUMERO_ALUNOS) VALUES (2025, '6º Ano', 'X', 28);
+
+-- Tentativa de inserir NUMERO_ALUNOS inválido (Erro: ORA-02290: check constraint violated)
+-- INSERT INTO TURMAS (ANO_LETIVO, SERIE, TURNO, NUMERO_ALUNOS) VALUES (2025, '5º Ano', 'T', 1);
+                    </code></pre>
+                </div>
+
+                <div class="card">
+                    <h5>f) `DEFAULT` (Valor Padrão) <i class="fas fa-undo-alt"></i></h5>
+                    <p>Atribui um valor padrão a uma coluna se nenhum valor for explicitamente fornecido durante uma
+                        operação `INSERT`. Não é tecnicamente uma "constraint" no mesmo sentido que as outras, mas é uma
+                        propriedade importante da coluna para garantir a completude dos dados.</p>
+                    <pre><code class="language-sql">
+CREATE TABLE ALUNOS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    NOME VARCHAR2(255) NOT NULL,
+    DATA_NASCIMENTO DATE NOT NULL,
+    TELEFONE VARCHAR2(20) DEFAULT 'Não informado', -- 'TELEFONE' assume 'Não informado' se não especificado
+    SEXO VARCHAR2(1),
+    EMAIL VARCHAR2(255),
+    DATA_MATRIICULA DATE NOT NULL,
+    STATUS_MATRICULA VARCHAR2(20) CHECK (STATUS_MATRICULA IN ('Ativo', 'Transferido', 'Trancado'))
+);
+
+-- Inserção sem especificar TELEFONE (usará o valor padrão)
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('Ana Clara', TO_DATE('2007-03-05', 'YYYY-MM-DD'), 'F', 'ana.clara@email.com', SYSDATE, 'Ativo');
+
+-- Inserção especificando TELEFONE
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, TELEFONE, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('Lucas Rocha', TO_DATE('2006-11-20', 'YYYY-MM-DD'), '81 98765-4321', 'M', 'lucas.r@email.com', SYSDATE, 'Ativo');
+
+SELECT TELEFONE FROM ALUNOS WHERE NOME IN ('Ana Clara', 'Lucas Rocha');
+                    </code></pre>
+                </div>
+
+                <h3>1.3. CREATE TABLE: Criando a Estrutura da Tabela <i class="fas fa-table"></i></h3>
+                <p>O comando `CREATE TABLE` é usado para criar uma nova tabela no banco de dados. Você define o nome da
+                    tabela, as colunas, seus tipos de dados e as restrições (constraints).</p>
+
+                <div class="card">
+                    <h4>Cenário: Criando as Tabelas do Sistema Escolar</h4>
+                    <p>Vamos criar as tabelas para armazenar informações de alunos, professores, turmas e notas. Preste
+                        atenção aos tipos de dados e às restrições para garantir a integridade dos dados.</p>
+
+                    <pre><code class="language-sql">
+CREATE TABLE ALUNOS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    NOME VARCHAR2(255) NOT NULL,
+    DATA_NASCIMENTO DATE NOT NULL,
+    TELEFONE VARCHAR2(20) DEFAULT 'Não informado',
+    SEXO VARCHAR2(1),
+    EMAIL VARCHAR2(255) UNIQUE,
+    DATA_MATRIICULA DATE NOT NULL,
+    STATUS_MATRICULA VARCHAR2(20) CHECK (STATUS_MATRICULA IN ('Ativo', 'Transferido', 'Trancado'))
+);
+
+CREATE TABLE PROFESSORES (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    NOME VARCHAR2(150) NOT NULL,
+    ESPECIALIDADE VARCHAR2(100) NOT NULL,
+    DT_ADIMISSAO DATE NOT NULL,
+    TELEFONE VARCHAR2(20),
+    EMAIL VARCHAR2(150),
+    SALARIO NUMBER(10,2) NOT NULL
+);
+
+CREATE TABLE TURMAS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    ANO_LETIVO NUMBER(4) NOT NULL,
+    SERIE VARCHAR2(20) NOT NULL,
+    TURNO VARCHAR2(1) CHECK (TURNO IN('M','T','N')),
+    PROFESSOR_ID NUMBER,
+    NUMERO_ALUNOS NUMBER(3) CHECK (NUMERO_ALUNOS >= 2),
+    CONSTRAINT FK_PROFESSOR FOREIGN KEY (PROFESSOR_ID) REFERENCES PROFESSORES (ID)
+);
+
+CREATE TABLE NOTAS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    ALUNO_ID NUMBER,
+    TURMA_ID NUMBER,
+    MATERIA VARCHAR2(100) NOT NULL,
+    NOTA_1 NUMBER(5,2),
+    NOTA_2 NUMBER(5,2),
+    NOTA_3 NUMBER(5,2),
+    NOTA_4 NUMBER(5,2),
+    MEDIA_FINAL NUMBER(5,2),
+    CONSTRAINT fk_aluno FOREIGN KEY (aluno_id) REFERENCES Alunos(id),
+    CONSTRAINT fk_turma FOREIGN KEY (turma_id) REFERENCES Turmas(id)
+);
+                    </code></pre>
+                    <h4>Explicação das Colunas e Restrições (Revisão):</h4>
+                    <ul>
+                        <li><code>ALUNOS.ID NUMBER PRIMARY KEY</code>: Identificador único, auto-gerado, não nulo.</li>
+                        <li><code>ALUNOS.NOME VARCHAR2(255) NOT NULL</code>: Nome do aluno, obrigatório.</li>
+                        <li><code>ALUNOS.DATA_NASCIMENTO DATE NOT NULL</code>: Data de nascimento, obrigatório.</li>
+                        <li><code>ALUNOS.TELEFONE VARCHAR2(20) DEFAULT 'Não informado'</code>: Telefone do aluno, com
+                            valor padrão.</li>
+                        <li><code>ALUNOS.SEXO VARCHAR2(1)</code>: Sexo do aluno.</li>
+                        <li><code>ALUNOS.EMAIL VARCHAR2(255) UNIQUE</code>: E-mail único para cada aluno.</li>
+                        <li><code>ALUNOS.DATA_MATRIICULA DATE NOT NULL</code>: Data de matrícula, obrigatório.</li>
+                        <li><code>ALUNOS.STATUS_MATRICULA VARCHAR2(20) CHECK (STATUS_MATRICULA IN ('Ativo', 'Transferido', 'Trancado'))</code>:
+                            Status da matrícula, validado por CHECK.</li>
+                        <li><code>PROFESSORES.ID NUMBER PRIMARY KEY</code>: Identificador único do professor,
+                            auto-gerado.</li>
+                        <li><code>PROFESSORES.NOME VARCHAR2(150) NOT NULL</code>: Nome do professor, obrigatório.</li>
+                        <li><code>PROFESSORES.ESPECIALIDADE VARCHAR2(100) NOT NULL</code>: Especialidade do professor,
+                            obrigatório.</li>
+                        <li><code>PROFESSORES.DT_ADIMISSAO DATE NOT NULL</code>: Data de admissão, obrigatório.</li>
+                        <li><code>TURMAS.PROFESSOR_ID NUMBER FOREIGN KEY REFERENCES PROFESSORES (ID)</code>: Chave
+                            estrangeira que referencia o ID do professor.</li>
+                        <li><code>TURMAS.TURNO VARCHAR2(1) CHECK (TURNO IN('M','T','N'))</code>: Turno da turma,
+                            validado por CHECK.</li>
+                        <li><code>TURMAS.NUMERO_ALUNOS NUMBER(3) CHECK (NUMERO_ALUNOS >= 2)</code>: Número de alunos na
+                            turma, com CHECK para ser maior ou igual a 2.</li>
+                        <li><code>NOTAS.ALUNO_ID NUMBER FOREIGN KEY REFERENCES ALUNOS (ID)</code>: Chave estrangeira que
+                            referencia o ID do aluno.</li>
+                        <li><code>NOTAS.TURMA_ID NUMBER FOREIGN KEY REFERENCES TURMAS (ID)</code>: Chave estrangeira que
+                            referencia o ID da turma.</li>
+                        <li><code>NOTAS.NOTA_1, NOTA_2, NOTA_3, NOTA_4 NUMBER(5,2)</code>: Notas individuais, com
+                            precisão de 5 dígitos no total e 2 decimais.</li>
+                        <li><code>NOTAS.MEDIA_FINAL NUMBER(5,2)</code>: Média final, com precisão de 5 dígitos no total
+                            e 2 decimais.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>1.3.1. Criando Tabela a Partir de uma Consulta (`CREATE TABLE AS SELECT`) <i
+                            class="fas fa-copy"></i></h4>
+                    <p>Este comando é útil para criar uma nova tabela e popular seus dados a partir do resultado de uma
+                        consulta `SELECT` em uma ou mais tabelas existentes. É excelente para criar tabelas de cópia ou
+                        tabelas temporárias.</p>
+                    <pre><code class="language-sql">
+-- Criar uma tabela 'ALUNOS_ATIVOS' com dados de alunos com status 'Ativo'
+CREATE TABLE ALUNOS_ATIVOS AS
+SELECT ID, NOME, EMAIL
+FROM ALUNOS
+WHERE STATUS_MATRICULA = 'Ativo';
+
+-- Observe que as constraints (PK, UNIQUE, NOT NULL, CHECK) da tabela original geralmente
+-- NÃO são copiadas automaticamente. Você precisaria adicioná-las separadamente.
+                    </code></pre>
+                </div>
+
+                <h3>1.4. Gerando IDs de Forma Automática (Auto Increment) <i class="fas fa-fingerprint"></i></h3>
+                <p>No Oracle, você pode gerar IDs automaticamente de algumas maneiras. As mais modernas e recomendadas
+                    são as colunas `IDENTITY` e o uso de `SEQUENCE`s, especialmente para cenários mais robustos.</p>
+
+                <h4>1.4.1. Colunas IDENTITY (Oracle 12c e superior)</h4>
+                <p>As colunas `IDENTITY` simplificam a criação de colunas com auto-incremento, similar ao
+                    `AUTO_INCREMENT` em MySQL ou `IDENTITY` em SQL Server. Existem duas formas principais:</p>
+
+                <div class="card">
+                    <h5>a) `GENERATED ALWAYS AS IDENTITY` (Forma Rígida)</h5>
+                    <p>Esta opção significa que o Oracle **sempre** irá gerar o valor para esta coluna. Você **não
+                        pode** inserir um valor manualmente para ela durante um `INSERT`.</p>
+                    <ul>
+                        <li><strong>Quando usar:</strong> Ideal quando você quer garantir que o banco de dados seja o
+                            único responsável pela geração do ID, evitando qualquer sobreposição manual. Garante a
+                            integridade e unicidade de forma estrita.</li>
+                        <li><strong>Por que usar:</strong> Previne erros onde um ID duplicado ou incorreto possa ser
+                            inserido manualmente, mantendo a sequência de ID intacta e sob controle do SGBD.</li>
+                    </ul>
+                    <pre><code class="language-sql">
+CREATE TABLE ALUNOS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY, -- ID sempre gerado pelo banco
+    NOME VARCHAR2(255) NOT NULL,
+    DATA_NASCIMENTO DATE NOT NULL,
+    DATA_MATRIICULA DATE NOT NULL
+);
+
+-- Inserção VÁLIDA (o banco gera o ID)
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, DATA_MATRIICULA) VALUES ('Maria Silva', TO_DATE('2005-05-15', 'YYYY-MM-DD'), TO_DATE('2020-02-10', 'YYYY-MM-DD'));
+
+-- Inserção INVÁLIDA (tentando inserir ID manualmente, resultará em erro ORA-32795)
+-- INSERT INTO ALUNOS (ID, NOME, DATA_NASCIMENTO, DATA_MATRIICULA) VALUES (101, 'Pedro Santos', TO_DATE('2006-03-20', 'YYYY-MM-DD'), TO_DATE('2021-02-15', 'YYYY-MM-DD'));
+                    </code></pre>
+
+                    <h5>b) `GENERATED BY DEFAULT ON NULL AS IDENTITY` (Forma Flexível)</h5>
+                    <p>Esta opção permite que o Oracle gere o valor para a coluna **se** você não fornecer um valor no
+                        `INSERT` ou se você fornecer `NULL`. Você **pode** inserir um valor manualmente se desejar.</p>
+                    <ul>
+                        <li><strong>Quando usar:</strong> Útil em cenários onde você pode ter IDs pré-existentes (por
+                            exemplo, ao migrar dados de um sistema antigo) ou quando, em situações excepcionais, a
+                            inserção manual de um ID é necessária (ex: para dados de teste específicos ou integrações).
+                        </li>
+                        <li><strong>Por que usar:</strong> Oferece flexibilidade. O banco ainda automatiza a geração de
+                            IDs na maioria dos casos, mas permite a intervenção manual quando justificado.</li>
+                    </ul>
+                    <pre><code class="language-sql">
+-- Para usar este exemplo, assuma que a tabela ALUNOS não foi criada com GENERATED ALWAYS
+-- DROP TABLE ALUNOS; -- Se precisar recriar
+CREATE TABLE ALUNOS (
+    ID NUMBER GENERATED BY DEFAULT ON NULL AS IDENTITY PRIMARY KEY, -- ID gerado se não for fornecido ou for NULL
+    NOME VARCHAR2(255) NOT NULL,
+    DATA_NASCIMENTO DATE NOT NULL,
+    DATA_MATRIICULA DATE NOT NULL
+);
+
+-- Inserção VÁLIDA (o banco gera o ID)
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, DATA_MATRIICULA) VALUES ('Ana Paula', TO_DATE('2007-09-01', 'YYYY-MM-DD'), SYSDATE);
+
+-- Inserção VÁLIDA (o banco gera o ID, pois explicitamente NULL foi passado)
+INSERT INTO ALUNOS (ID, NOME, DATA_NASCIMENTO, DATA_MATRIICULA) VALUES (NULL, 'Carlos Eduardo', TO_DATE('2008-01-01', 'YYYY-MM-DD'), SYSDATE);
+
+-- Inserção VÁLIDA (ID inserido manualmente)
+INSERT INTO ALUNOS (ID, NOME, DATA_NASCIMENTO, DATA_MATRIICULA) VALUES (200, 'Fernanda Souza', TO_DATE('2006-05-10', 'YYYY-MM-DD'), SYSDATE);
+                    </code></pre>
+
+                    <p><span class="highlight-info"><strong>Configurações Avançadas de IDENTITY:</strong></span> Você
+                        pode customizar o início e o incremento das colunas `IDENTITY`:</p>
+                    <pre><code class="language-sql">
+CREATE TABLE PROFESSORES (
+    ID NUMBER GENERATED BY DEFAULT ON NULL AS IDENTITY
+        (START WITH 1000 INCREMENT BY 10) PRIMARY KEY, -- Começa em 1000, incrementa de 10 em 10
+    NOME VARCHAR2(150) NOT NULL,
+    ESPECIALIDADE VARCHAR2(100) NOT NULL,
+    DT_ADIMISSAO DATE NOT NULL,
+    SALARIO NUMBER(10,2) NOT NULL
+);
+
+INSERT INTO PROFESSORES (NOME, ESPECIALIDADE, DT_ADIMISSAO, SALARIO) VALUES ('Monitor UltraWide', 'Matemática', SYSDATE, 3000.00); -- ID será 1000
+INSERT INTO PROFESSORES (NOME, ESPECIALIDADE, DT_ADIMISSAO, SALARIO) VALUES ('Teclado Mecânico', 'Física', SYSDATE, 3200.00);  -- ID será 1010
+INSERT INTO PROFESSORES (ID, NOME, ESPECIALIDADE, DT_ADIMISSAO, SALARIO) VALUES (500, 'Mouse Ergonômico', 'Química', SYSDATE, 3100.00); -- ID 500
+                    </code></pre>
+                </div>
+
+                <h4>1.4.2. Sequences (Sequências) + Triggers (Forma Tradicional e Robusta)</h4>
+                <p>Antes do Oracle 12c, a forma padrão de auto-incremento era usar `SEQUENCE`s em conjunto com
+                    `TRIGGER`s (gatilhos). Esta abordagem ainda é amplamente utilizada em sistemas legados ou em
+                    cenários mais complexos que exigem maior controle sobre a geração de números. Para bancos de dados
+                    robustos e de grande porte, a utilização de `SEQUENCE`s é a prática mais comum e flexível.</p>
+                <ul>
+                    <li><strong>Quando usar:</strong> Para compatibilidade com versões mais antigas do Oracle, em
+                        ambientes que precisam de controle granular sobre a sequência (cache, order, etc.), ou quando
+                        uma única sequência precisa servir a múltiplas tabelas (embora menos comum). É a forma preferida
+                        para bancos corporativos que demandam alta performance e controle.</li>
+                    <li><strong>Por que usar:</strong> Oferece mais control e flexibilidade sobre a geração de números
+                        (ciclos, cache, etc.). É performático e escalável para cenários de alta concorrência.</li>
+                </ul>
+
+                <div class="card">
+                    <h5>Exemplo com SEQUENCE e TRIGGER:</h5>
+                    <pre><code class="language-sql">
+-- 1. Criar a SEQUENCE (Sequência de números)
+--   - START WITH 1: Começa a sequência do número 1
+--   - INCREMENT BY 1: Incrementa a sequência de 1 em 1
+--   - NOMAXVALUE: Não define um valor máximo para a sequência
+--   - NOCYCLE: Não reinicia a sequência após atingir o valor máximo (se houver)
+--   - CACHE 20: Armazena 20 números da sequência em memória para melhorar a performance
+CREATE SEQUENCE SEQ_ALUNO_ID_MANUAL
+START WITH 1
+INCREMENT BY 1
+NOMAXVALUE
+NOCYCLE
+CACHE 20;
+
+-- 2. Criar a tabela com a coluna que receberá o valor da SEQUENCE (se não for IDENTITY)
+-- DROP TABLE ALUNOS; -- Se precisar recriar sem IDENTITY
+CREATE TABLE ALUNOS (
+    ID NUMBER PRIMARY KEY,
+    NOME VARCHAR2(255) NOT NULL,
+    DATA_NASCIMENTO DATE NOT NULL,
+    DATA_MATRIICULA DATE NOT NULL
+);
+
+-- 3. Criar uma TRIGGER (Gatilho) para associar a SEQUENCE à tabela (OPCIONAL, para flexibilidade)
+--    Esta trigger é "flexível": se você não fornecer o ID, ela usa a sequence.
+--    Se você fornecer o ID, ela usa o que você forneceu.
+CREATE OR REPLACE TRIGGER TRG_ALUNO_ID
+BEFORE INSERT ON ALUNOS
+FOR EACH ROW
+BEGIN
+    IF :NEW.ID IS NULL THEN
+        :NEW.ID := SEQ_ALUNO_ID_MANUAL.NEXTVAL;
+    END IF;
+END;
+/
+
+-- Inserção usando a TRIGGER (sem informar o ID, a trigger usará a SEQUENCE)
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, DATA_MATRIICULA) VALUES ('Profa. Ana', TO_DATE('2000-01-01', 'YYYY-MM-DD'), SYSDATE);
+
+-- Inserção informando o ID manualmente (a trigger não atuará, e o ID fornecido será usado)
+INSERT INTO ALUNOS (ID, NOME, DATA_NASCIMENTO, DATA_MATRIICULA) VALUES (100, 'Prof. Carlos', TO_DATE('2001-02-02', 'YYYY-MM-DD'), SYSDATE);
+
+-- 4. Inserção DIRETAMENTE usando a SEQUENCE (Abordagem muito comum e recomendada)
+--    Nesta abordagem, você assume o controle da geração do ID e explicitamente
+--    pede o próximo valor da sequência no INSERT.
+INSERT INTO ALUNOS (ID, NOME, DATA_NASCIMENTO, DATA_MATRIICULA)
+VALUES (SEQ_ALUNO_ID_MANUAL.NEXTVAL, 'Prof. João', TO_DATE('2002-03-03', 'YYYY-MM-DD'), SYSDATE);
+
+INSERT INTO ALUNOS (ID, NOME, DATA_NASCIMENTO, DATA_MATRIICULA)
+VALUES (SEQ_ALUNO_ID_MANUAL.NEXTVAL, 'Profa. Lúcia', TO_DATE('2003-04-04', 'YYYY-MM-DD'), SYSDATE);
+
+SELECT * FROM ALUNOS;
+                    </code></pre>
+                </div>
+
+                <h3>1.5. ALTER TABLE: Modificando a Estrutura Existente <i class="fas fa-edit"></i></h3>
+                <p>O comando `ALTER TABLE` permite modificar a estrutura de uma tabela existente. Você pode adicionar,
+                    modificar ou remover colunas e restrições, além de renomear objetos.</p>
+
+                <div class="card">
+                    <h4>Cenário: Modificando a Tabela ALUNOS</h4>
+                    <pre><code class="language-sql">
+-- Adicionar uma nova coluna 'TELEFONE' (já definida com DEFAULT na criação original)
+ALTER TABLE ALUNOS
+ADD (TELEFONE VARCHAR2(20) DEFAULT 'Não informado');
+
+-- Modificar o tamanho da coluna 'NOME' para 200 caracteres
+ALTER TABLE ALUNOS
+MODIFY (NOME VARCHAR2(200));
+
+-- Adicionar uma restrição NOT NULL à coluna 'TELEFONE' (se a coluna não tiver dados nulos existentes e você removeu o DEFAULT)
+-- ALTER TABLE ALUNOS
+-- MODIFY (TELEFONE VARCHAR2(20) NOT NULL);
+
+-- Remover a coluna 'SEXO'
+ALTER TABLE ALUNOS
+DROP COLUMN SEXO;
+
+-- Adicionar uma constraint de CHECK para validar o email (se não existir)
+ALTER TABLE ALUNOS
+ADD CONSTRAINT chk_aluno_email CHECK (EMAIL LIKE '%@%.%');
+
+-- Renomear uma coluna (do Oracle 10g em diante)
+ALTER TABLE ALUNOS
+RENAME COLUMN TELEFONE TO CONTATO_TELEFONE;
+
+-- Renomear a tabela inteira
+ALTER TABLE ALUNOS
+RENAME TO ESTUDANTES;
+
+-- Para renomear de volta se necessário
+ALTER TABLE ESTUDANTES
+RENAME TO ALUNOS;
+                    </code></pre>
+                </div>
+
+                <h3>1.6. DROP TABLE: Excluindo uma Tabela <i class="fas fa-trash-alt"></i></h3>
+                <p>O comando `DROP TABLE` é usado para remover completamente uma tabela do banco de dados, incluindo
+                    todos os seus dados, índices e restrições. Esta operação é irreversível.</p>
+                <div class="card">
+                    <h4>Cenário: Excluindo as Tabelas do Sistema Escolar (Ordem Importante!)</h4>
+                    <p>Ao excluir tabelas com chaves estrangeiras, é crucial seguir a ordem inversa da criação para
+                        evitar erros de dependência. Exclua primeiro as tabelas filhas (que referenciam chaves de outras
+                        tabelas).</p>
+                    <pre><code class="language-sql">
+-- Ordem correta para DROP (filhas primeiro, pais depois):
+DROP TABLE NOTAS CASCADE CONSTRAINTS; -- Remove NOTAS e suas FKs
+DROP TABLE TURMAS CASCADE CONSTRAINTS; -- Remove TURMAS e suas FKs
+DROP TABLE ALUNOS CASCADE CONSTRAINTS; -- Remove ALUNOS e suas FKs
+DROP TABLE PROFESSORES CASCADE CONSTRAINTS; -- Remove PROFESSORES e suas FKs
+                    </code></pre>
+                    <p><span class="highlight-warning"><strong>Cuidado:</strong></span> `DROP TABLE` apaga a tabela e
+                        todos os seus dados. Se houver chaves estrangeiras referenciando esta tabela, você precisará
+                        apagar primeiro as tabelas que referenciam, ou usar `CASCADE CONSTRAINTS` (com muito cuidado).
+                    </p>
+                    <pre><code class="language-sql">
+-- Para remover a tabela permanentemente, sem enviá-la para a recycle bin (no Oracle 10g+).
+-- Geralmente usado em scripts de deploy ou em testes, para garantir limpeza total.
+DROP TABLE ALUNOS PURGE;
+                    </code></pre>
+                    <p><span class="highlight-info"><strong>Recycle Bin:</strong></span> No Oracle, uma tabela "DROPADA"
+                        vai para a "Recycle Bin" (lixeira) e pode ser recuperada com `FLASHBACK TABLE` ou `RECYCLEBIN`
+                        até que seja purgada. `PURGE` remove permanentemente.</p>
+                </div>
+            </div>
+
+            <div class="sub-section">
+                <h2>2️⃣ Linguagem de Manipulação de Dados (DML) <i class="fas fa-database"></i></h2>
+                <p>DML (Data Manipulation Language) é usada para manipular os dados dentro dos objetos do banco de dados
+                    (tabelas). As operações DML são transacionais, o que significa que você pode confirmar (`COMMIT`) ou
+                    reverter (`ROLLBACK`) as alterações.</p>
+
+                <h3>2.1. INSERT INTO: Inserindo Dados <i class="fas fa-plus-circle"></i></h3>
+                <p>O comando `INSERT INTO` é usado para adicionar novas linhas (registros) a uma tabela.</p>
+
+                <div class="card">
+                    <h4>Cenário: Inserindo Dados nas Tabelas</h4>
+                    <p>Vamos adicionar alguns dados às nossas tabelas.</p>
+                    <pre><code class="language-sql">
+-- Inserindo em ALUNOS (ID é GENERATED ALWAYS, então não inclua na lista de colunas)
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('João Silva', TO_DATE('2005/05/15', 'YYYY/MM/DD'), 'M', 'joao.silva@email.com', TO_DATE('2020-02-10', 'YYYY-MM-DD'), 'Ativo');
+
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('Maria Oliveira', TO_DATE('2004-07-21', 'YYYY-MM-DD'), 'F', 'maria.oliveira@email.com', TO_DATE('01/03/2019', 'DD/MM/YYYY'), 'Transferido');
+
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('Pedro Santos', TO_DATE('2006-03-20', 'YYYY-MM-DD'), 'M', 'pedro.santos@email.com', TO_DATE('2021-02-15', 'YYYY-MM-DD'), 'Ativo');
+
+-- Inserindo em PROFESSORES (ID é GENERATED ALWAYS)
+INSERT INTO PROFESSORES (NOME, ESPECIALIDADE, DT_ADIMISSAO, TELEFONE, EMAIL, SALARIO)
+VALUES ('Carlos Souza', 'Matemática', TO_DATE('2015-02-25', 'YYYY-MM-DD'), '99999-1234', 'carlos.souza@email.com', 3500.00);
+
+INSERT INTO PROFESSORES (NOME, ESPECIALIDADE, DT_ADIMISSAO, TELEFONE, EMAIL, SALARIO)
+VALUES ('Ana Costa', 'Português', TO_DATE('2017-06-10', 'YYYY-MM-DD'), '99999-5678', 'ana.costa@email.com', 3000.00);
+
+-- Inserindo em TURMAS (assumindo IDs 1 e 2 para professores já inseridos)
+INSERT INTO TURMAS (ANO_LETIVO, SERIE, TURNO, PROFESSOR_ID, NUMERO_ALUNOS)
+VALUES (2025, '8º Ano', 'M', 1, 28);
+
+INSERT INTO TURMAS (ANO_LETIVO, SERIE, TURNO, PROFESSOR_ID, NUMERO_ALUNOS)
+VALUES (2025, '9º Ano', 'T', 2, 22);
+
+-- Inserindo em NOTAS (assumindo IDs 1 e 2 para alunos, e 1 e 2 para turmas)
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, MATERIA, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (1, 1, 'Matemática', 8.5, 7.0, 9.0, 8.0, 8.13);
+
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, MATERIA, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (2, 2, 'Português', 9.0, 8.5, 7.5, 9.5, 8.63);
+
+COMMIT; -- Salvar as alterações
+                    </code></pre>
+                    <h4>Notas de Inserção:</h4>
+                    <ul>
+                        <li>É boa prática listar as colunas nas quais você está inserindo dados, mesmo que seja em
+                            todas.</li>
+                        <li>Se uma coluna tem um valor `DEFAULT` e você não a inclui na lista de colunas, o valor padrão
+                            será usado.</li>
+                        <li>Para colunas `IDENTITY GENERATED ALWAYS`, você **não** pode especificar o `ID`.</li>
+                        <li>Para colunas `IDENTITY GENERATED BY DEFAULT ON NULL`, você pode omitir o `ID`, passar `NULL`
+                            explicitamente, ou passar um valor manual.</li>
+                        <li>Quando usar uma `SEQUENCE` e o `ID` for apenas `NUMBER PRIMARY KEY` (sem ser `IDENTITY`),
+                            você deve explicitamente usar `NOME_DA_SEQUENCE.NEXTVAL` para gerar o ID na inserção.</li>
+                        <li>`TO_DATE('YYYY-MM-DD', 'YYYY-MM-DD')` é uma função Oracle para converter uma string em um
+                            tipo de dado `DATE`.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>2.1.1. Inserindo Dados a Partir de Outra Tabela (`INSERT INTO ... SELECT`) <i
+                            class="fas fa-arrow-alt-circle-down"></i></h4>
+                    <p>Permite inserir dados em uma tabela a partir do resultado de uma consulta `SELECT` em outra
+                        tabela (ou na mesma tabela).</p>
+                    <pre><code class="language-sql">
+-- Inserir alunos com status 'Transferido' em uma nova tabela de backup, por exemplo
+CREATE TABLE ALUNOS_TRANSFERIDOS_BACKUP (
+    ID NUMBER PRIMARY KEY,
+    NOME VARCHAR2(255),
+    EMAIL VARCHAR2(255)
+);
+
+INSERT INTO ALUNOS_TRANSFERIDOS_BACKUP (ID, NOME, EMAIL)
+SELECT ID, NOME, EMAIL
+FROM ALUNOS
+WHERE STATUS_MATRICULA = 'Transferido';
+
+COMMIT;
+                    </code></pre>
+                </div>
+
+                <h3>2.2. UPDATE: Atualizando Dados <i class="fas fa-redo-alt"></i></h3>
+                <p>O comando `UPDATE` é usado para modificar dados existentes em uma ou mais linhas de uma tabela.</p>
+
+                <div class="card">
+                    <h4>Cenário: Atualizando Dados nas Tabelas</h4>
+                    <pre><code class="language-sql">
+UPDATE ALUNOS
+SET TELEFONE = '81 99999-9999'
+WHERE Upper(NOME) = 'JOÃO SILVA';
+
+UPDATE ALUNOS
+SET STATUS_MATRICULA = 'Ativo'
+WHERE EMAIL = 'maria.oliveira@email.com';
+
+UPDATE PROFESSORES
+SET SALARIO = SALARIO * 1.10 -- Aumento de 10%
+WHERE ESPECIALIDADE = 'Matemática';
+
+UPDATE TURMAS
+SET NUMERO_ALUNOS = NUMERO_ALUNOS + 2
+WHERE SERIE = '8º Ano' AND TURNO = 'M';
+
+UPDATE NOTAS
+SET NOTA_4 = 10.0, MEDIA_FINAL = (NOTA_1 + NOTA_2 + NOTA_3 + 10.0) / 4
+WHERE ALUNO_ID = 1 AND MATERIA = 'Matemática';
+
+COMMIT;
+                    </code></pre>
+                    <p><span class="highlight-warning"><strong>Cuidado:</strong></span> Sempre use a cláusula `WHERE` em
+                        um `UPDATE` para evitar atualizar todas as linhas da tabela por engano.</p>
+                </div>
+
+                <h3>2.3. DELETE FROM: Excluindo Dados <i class="fas fa-minus-circle"></i></h3>
+                <p>O comando `DELETE FROM` é usado para remover uma ou mais linhas de uma tabela.</p>
+
+                <div class="card">
+                    <h4>Cenário: Excluindo Dados das Tabelas</h4>
+                    <pre><code class="language-sql">
+DELETE FROM NOTAS
+WHERE ALUNO_ID = 2; -- Excluir notas do aluno com ID 2
+
+DELETE FROM ALUNOS
+WHERE NOME = 'Maria Oliveira'; -- Excluir aluno 'Maria Oliveira'
+
+DELETE FROM TURMAS
+WHERE ANO_LETIVO = 2025 AND SERIE = '9º Ano';
+
+-- Excluir todos os registros da tabela (CUIDADO!)
+-- DELETE FROM ALUNOS;
+
+COMMIT;
+                    </code></pre>
+                    <p><span class="highlight-warning"><strong>Cuidado:</strong></span> Similar ao `UPDATE`, sempre use
+                        a cláusula `WHERE` em um `DELETE` para evitar apagar todas as linhas da tabela por engano.
+                        Lembre-se que `DELETE` pode ser revertido com `ROLLBACK` (se não houver um `COMMIT` posterior).
+                    </p>
+                </div>
+            </div>
+
+            <div class="sub-section">
+                <h2>3️⃣ Linguagem de Consulta de Dados (DQL) <i class="fas fa-search"></i></h2>
+                <p>DQL (Data Query Language) é usada para recuperar dados de um banco de dados. O comando `SELECT` é o
+                    comando mais utilizado em DQL.</p>
+
+                <div class="card">
+                    <h3>3.1. SELECT: Consultando Dados <i class="fas fa-eye"></i></h3>
+                    <h4>Sintaxe Básica e Cláusulas Comuns:</h4>
+                    <p>A sintaxe básica de um `SELECT` é:</p>
+                    <pre><code class="language-sql">
+SELECT [DISTINCT] column1, column2, ... | *
+FROM table_name
+[WHERE condition]
+[GROUP BY column(s)]
+[HAVING condition]
+[ORDER BY column(s) [ASC|DESC]]
+[FETCH FIRST N ROWS ONLY | OFFSET M ROWS FETCH NEXT N ROWS ONLY]; -- Para limitar resultados (Oracle 12c+)
+                    </code></pre>
+                    <ul>
+                        <li>`SELECT`: Especifica as colunas que você deseja ver ou uma expressão. `*` seleciona todas as
+                            colunas.</li>
+                        <li>`FROM`: Indica de qual tabela os dados serão recuperados.</li>
+                        <li>`WHERE`: Filtra as linhas com base em uma condição.</li>
+                        <li>`GROUP BY`: Agrupa linhas que têm os mesmos valores em colunas especificadas em um conjunto
+                            de resumo.</li>
+                        <li>`HAVING`: Filtra grupos com base em uma condição (usado após `GROUP BY`).</li>
+                        <li>`ORDER BY`: Classifica o conjunto de resultados em ordem crescente (`ASC`) ou decrescente
+                            (`DESC`).</li>
+                        <li>`FETCH FIRST N ROWS ONLY` / `OFFSET M ROWS FETCH NEXT N ROWS ONLY`: Limita o número de
+                            linhas retornadas (paginação).</li>
+                    </ul>
+
+                    <h4>Cenário: Consultando Dados das Tabelas</h4>
+                    <pre><code class="language-sql">
+-- Selecionar todas as colunas de todos os alunos
+SELECT *
+FROM ALUNOS;
+
+-- Selecionar apenas NOME, EMAIL e TELEFONE dos alunos
+SELECT NOME, EMAIL, TELEFONE
+FROM ALUNOS;
+
+-- Selecionar especialidades únicas de professores
+SELECT DISTINCT ESPECIALIDADE
+FROM PROFESSORES;
+
+-- Selecionar alunos com STATUS_MATRICULA 'Ativo'
+SELECT NOME, DATA_MATRIICULA, STATUS_MATRICULA
+FROM ALUNOS
+WHERE STATUS_MATRICULA = 'Ativo';
+
+-- Selecionar professores cujo nome começa com 'A'
+SELECT NOME, ESPECIALIDADE
+FROM PROFESSORES
+WHERE NOME LIKE 'A%';
+
+-- Selecionar turmas do turno 'M' ou 'T'
+SELECT ANO_LETIVO, SERIE, TURNO
+FROM TURMAS
+WHERE TURNO IN ('M', 'T');
+
+-- Selecionar alunos nascidos entre 2004 e 2006 (inclusive)
+SELECT NOME, DATA_NASCIMENTO
+FROM ALUNOS
+WHERE EXTRACT(YEAR FROM DATA_NASCIMENTO) BETWEEN 2004 AND 2006;
+
+-- Selecionar alunos que não têm EMAIL cadastrado (NULL)
+SELECT NOME, EMAIL
+FROM ALUNOS
+WHERE EMAIL IS NULL;
+
+-- Selecionar alunos e ordenar por NOME em ordem alfabética (ASC é padrão)
+SELECT ID, NOME, DATA_MATRIICULA
+FROM ALUNOS
+ORDER BY NOME ASC;
+
+-- Selecionar notas e ordenar por MEDIA_FINAL de forma decrescente
+SELECT ALUNO_ID, MATERIA, MEDIA_FINAL
+FROM NOTAS
+ORDER BY MEDIA_FINAL DESC;
+
+-- Limitar o resultado aos 2 primeiros professores (Oracle 12c+)
+SELECT ID, NOME, ESPECIALIDADE
+FROM PROFESSORES
+ORDER BY ID
+FETCH FIRST 2 ROWS ONLY;
+
+-- Contar o total de alunos
+SELECT COUNT(*)
+FROM ALUNOS;
+
+-- Contar quantos alunos existem por STATUS_MATRICULA
+SELECT STATUS_MATRICULA, COUNT(*) AS TOTAL_ALUNOS
+FROM ALUNOS
+GROUP BY STATUS_MATRICULA;
+
+-- Contar quantos professores existem por ESPECIALIDADE, mas apenas especialidades com mais de 1 professor
+SELECT ESPECIALIDADE, COUNT(*) AS TOTAL_PROFESSORES
+FROM PROFESSORES
+GROUP BY ESPECIALIDADE
+HAVING COUNT(*) > 1;
+                    </code></pre>
+                </div>
+
+                <div class="card">
+                    <h3>3.2. Funções Essenciais em SELECT <i class="fas fa-cogs"></i></h3>
+                    <p>O Oracle SQL oferece muitas funções embutidas que podem ser usadas para manipular dados em suas
+                        consultas.</p>
+                    <pre><code class="language-sql">
+-- Funções de String
+SELECT UPPER('oracle sql') AS upper_case,
+       LOWER('ORACLE SQL') AS lower_case,
+       LENGTH('Oracle') AS text_length
+FROM DUAL; -- DUAL é uma tabela especial no Oracle para testar funções
+
+-- Funções Numéricas
+SELECT ROUND(123.456, 2) AS rounded_number, -- Arredonda para 2 casas decimais
+       TRUNC(123.456, 1) AS truncated_number, -- Trunca para 1 casa decimal
+       ABS(-100) AS absolute_value
+FROM DUAL;
+
+-- Funções de Data e Hora
+SELECT SYSDATE AS current_date_time, -- Data e hora atuais do sistema
+       TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS') AS formatted_date, -- Formata data para string
+       TO_DATE('2025-12-25', 'YYYY-MM-DD') AS string_to_date -- Converte string para data
+FROM DUAL;
+
+-- Função NVL: substitui NULL por um valor especificado
+SELECT NOME, NVL(EMAIL, 'Email não cadastrado') AS EMAIL_OU_PADRAO
+FROM ALUNOS;
+                    </code></pre>
+                    <p><span class="highlight-info"><strong>Tabela DUAL:</strong></span> A tabela `DUAL` é uma tabela de
+                        sistema no Oracle com uma única coluna (`DUMMY`) e uma única linha (`X`). Ela é usada para
+                        executar funções que não precisam de uma tabela específica, como obter a data atual ou testar
+                        expressões.</p>
+                </div>
+            </div>
+
+            <div class="sub-section">
+                <h2>4️⃣ Linguagem de Controle de Transação (TCL) <i class="fas fa-exchange-alt"></i></h2>
+                <p>TCL (Transaction Control Language) é usada para gerenciar transações no banco de dados. Uma transação
+                    é uma sequência de uma ou mais operações DML (INSERT, UPDATE, DELETE) que são tratadas como uma
+                    única unidade de trabalho. Ou seja, todas as operações dentro da transação devem ser concluídas com
+                    sucesso, ou nenhuma delas será.</p>
+
+                <h3>4.1. COMMIT: Confirmando Alterações <i class="fas fa-check-circle"></i></h3>
+                <p>O comando `COMMIT` salva permanentemente as alterações feitas em uma transação no banco de dados. Uma
+                    vez que um `COMMIT` é executado, as alterações se tornam visíveis para outros usuários e não podem
+                    ser desfeitas com `ROLLBACK`.</p>
+                <div class="card">
+                    <pre><code class="language-sql">
+-- Inserir um novo aluno
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('João da Silva', TO_DATE('2007-08-01', 'YYYY-MM-DD'), SYSDATE, 'Ativo');
+
+-- Atualizar o nome de um aluno existente
+UPDATE ALUNOS
+SET NOME = 'João Silva Júnior'
+WHERE NOME = 'João da Silva';
+
+-- Confirmar todas as alterações realizadas desde o último COMMIT
+COMMIT;
+                    </code></pre>
+                    <p><span class="highlight-info"><strong>Auto-Commit:</strong></span> Em algumas ferramentas (como
+                        SQL Developer), o auto-commit pode estar ativado por padrão. Em ambientes de desenvolvimento, é
+                        comum desativar o auto-commit para praticar o controle manual das transações.</p>
+                </div>
+
+                <h3>4.2. ROLLBACK: Desfazendo Alterações <i class="fas fa-undo"></i></h3>
+                <p>O comando `ROLLBACK` desfaz todas as alterações feitas na transação atual desde o último `COMMIT` ou
+                    `ROLLBACK`. Ele reverte o banco de dados para o estado em que estava antes do início da transação.
+                </p>
+                <div class="card">
+                    <pre><code class="language-sql">
+-- Inserir um aluno que pode estar errado
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('Aluno Errado', TO_DATE('2008-09-09', 'YYYY-MM-DD'), SYSDATE, 'Ativo');
+
+-- Tentar atualizar algo que não deveria
+UPDATE ALUNOS
+SET STATUS_MATRICULA = 'Trancado'
+WHERE NOME = 'João Silva';
+
+-- Verificar as alterações (elas são visíveis para a sessão atual)
+SELECT NOME, STATUS_MATRICULA FROM ALUNOS WHERE NOME IN ('Aluno Errado', 'João Silva');
+
+-- Desfazer todas as alterações desde o último COMMIT
+ROLLBACK;
+
+-- Verificar novamente (as alterações foram desfeitas)
+SELECT NOME, STATUS_MATRICULA FROM ALUNOS WHERE NOME IN ('Aluno Errado', 'João Silva');
+                    </code></pre>
+                </div>
+
+                <h3>4.3. SAVEPOINT: Pontos de Salvamento na Transação <i class="fas fa-bookmark"></i></h3>
+                <p>Um `SAVEPOINT` (ponto de salvamento) permite que você defina um ponto dentro de uma transação ao qual
+                    você pode reverter, sem desfazer toda a transação. É útil para desfazer apenas parte de um conjunto
+                    de operações DML.</p>
+                <div class="card">
+                    <pre><code class="language-sql">
+-- Início da transação
+INSERT INTO PROFESSORES (NOME, ESPECIALIDADE, DT_ADIMISSAO, SALARIO) VALUES ('Professor Um', 'História', SYSDATE, 2800.00);
+
+-- Define um ponto de salvamento
+SAVEPOINT primeiro_ponto;
+
+INSERT INTO PROFESSORES (NOME, ESPECIALIDADE, DT_ADIMISSAO, SALARIO) VALUES ('Professor Dois', 'Geografia', SYSDATE, 2900.00);
+
+-- Desfazer apenas até 'primeiro_ponto'
+ROLLBACK TO primeiro_ponto;
+
+-- 'Professor Dois' foi desfeito, mas 'Professor Um' ainda existe (na transação atual)
+SELECT NOME FROM PROFESSORES WHERE NOME IN ('Professor Um', 'Professor Dois');
+
+-- Confirmar 'Professor Um'
+COMMIT;
+                    </code></pre>
+                </div>
+            </div>
+
+            <div class="sub-section">
+                <h2>5️⃣ Excluindo Objetos do Banco de Dados <i class="fas fa-eraser"></i></h2>
+                <p>É importante saber como remover os objetos que você criou, seja para limpeza, recriação ou
+                    organização. Além de `DROP TABLE`, existem outros comandos de exclusão importantes.</p>
+
+                <h3>5.1. DROP SEQUENCE: Removendo Sequências <i class="fas fa-list-ol"></i></h3>
+                <p>Se você criou uma `SEQUENCE` para auto-incremento, pode removê-la com `DROP SEQUENCE`.</p>
+                <div class="card">
+                    <pre><code class="language-sql">
+DROP SEQUENCE SEQ_ALUNO_ID_MANUAL;
+                    </code></pre>
+                </div>
+
+                <h3>5.2. DROP TRIGGER: Removendo Gatilhos <i class="fas fa-bolt"></i></h3>
+                <p>Se você criou uma `TRIGGER` para associar uma sequência a uma tabela, pode removê-la com `DROP
+                    TRIGGER`.</p>
+                <div class="card">
+                    <pre><code class="language-sql">
+DROP TRIGGER TRG_ALUNO_ID;
+                    </code></pre>
+                </div>
+
+                <h3>5.3. TRUNCATE TABLE: Limpando a Tabela Rapidamente <i class="fas fa-broom"></i></h3>
+                <p>O comando `TRUNCATE TABLE` é uma operação DDL que remove **todas** as linhas de uma tabela de forma
+                    muito rápida e eficiente. Diferente do `DELETE`, ele não gera logs de transação para cada linha e
+                    **não pode ser revertido com `ROLLBACK`**. Ele também reinicia qualquer contador de `IDENTITY` para
+                    o valor inicial, e libera o espaço de armazenamento da tabela.</p>
+                <div class="card">
+                    <pre><code class="language-sql">
+TRUNCATE TABLE ALUNOS;
+                    </code></pre>
+                    <p><span class="highlight-warning"><strong>Cuidado Extremo:</strong></span> Use `TRUNCATE` apenas
+                        quando tiver certeza de que deseja apagar todos os dados e não precisar recuperá-los. É muito
+                        rápido, mas irreversível. É mais performático para limpar tabelas grandes do que `DELETE` sem
+                        `WHERE`.</p>
+                </div>
+            </div>
+
+            <div class="exercise">
+                <h2>Exercícios Práticos <i class="fas fa-question-circle"></i></h2>
+                <p>Pratique os comandos aprendidos criando e manipulando as tabelas do sistema escolar.</p>
+                <div class="card">
+                    <ol class="padding-r-10">
+                        <li>
+                            <p><strong>Crie as Tabelas <code>ALUNOS</code>, <code>PROFESSORES</code>,
+                                    <code>TURMAS</code> e <code>NOTAS</code>:</strong></p>
+                            <ul>
+                                <li>Utilize as definições de tabela fornecidas no início do documento.</li>
+                                <li>Certifique-se de que todas as chaves primárias são `GENERATED ALWAYS AS IDENTITY`.
+                                </li>
+                                <li>Configure as chaves estrangeiras corretamente.</li>
+                            </ul>
+                            <button onclick="toggleAnswer('ansExL1')">Mostrar Gabarito</button>
+                            <div class="answer" id="ansExL1">
+                                <pre><code class="language-sql">
+-- Certifique-se de dropar as tabelas na ordem correta antes de recriá-las
+-- DROP TABLE NOTAS CASCADE CONSTRAINTS;
+-- DROP TABLE TURMAS CASCADE CONSTRAINTS;
+-- DROP TABLE ALUNOS CASCADE CONSTRAINTS;
+-- DROP TABLE PROFESSORES CASCADE CONSTRAINTS;
+
+CREATE TABLE ALUNOS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    NOME VARCHAR2(255) NOT NULL,
+    DATA_NASCIMENTO DATE NOT NULL,
+    TELEFONE VARCHAR2(20) DEFAULT 'Não informado',
+    SEXO VARCHAR2(1),
+    EMAIL VARCHAR2(255) UNIQUE,
+    DATA_MATRIICULA DATE NOT NULL,
+    STATUS_MATRICULA VARCHAR2(20) CHECK (STATUS_MATRICULA IN ('Ativo', 'Transferido', 'Trancado'))
+);
+
+CREATE TABLE PROFESSORES (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    NOME VARCHAR2(150) NOT NULL,
+    ESPECIALIDADE VARCHAR2(100) NOT NULL,
+    DT_ADIMISSAO DATE NOT NULL,
+    TELEFONE VARCHAR2(20),
+    EMAIL VARCHAR2(150),
+    SALARIO NUMBER(10,2) NOT NULL
+);
+
+CREATE TABLE TURMAS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    ANO_LETIVO NUMBER(4) NOT NULL,
+    SERIE VARCHAR2(20) NOT NULL,
+    TURNO VARCHAR2(1) CHECK (TURNO IN('M','T','N')),
+    PROFESSOR_ID NUMBER,
+    NUMERO_ALUNOS NUMBER(3) CHECK (NUMERO_ALUNOS >= 2),
+    CONSTRAINT FK_PROFESSOR FOREIGN KEY (PROFESSOR_ID) REFERENCES PROFESSORES (ID) ON DELETE SET NULL
+);
+
+CREATE TABLE NOTAS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    ALUNO_ID NUMBER,
+    TURMA_ID NUMBER,
+    MATERIA VARCHAR2(100) NOT NULL,
+    NOTA_1 NUMBER(5,2),
+    NOTA_2 NUMBER(5,2),
+    NOTA_3 NUMBER(5,2),
+    NOTA_4 NUMBER(5,2),
+    MEDIA_FINAL NUMBER(5,2),
+    CONSTRAINT fk_aluno FOREIGN KEY (aluno_id) REFERENCES Alunos(id),
+    CONSTRAINT fk_turma FOREIGN KEY (turma_id) REFERENCES Turmas(id)
+);
+                                </code></pre>
+                            </div>
+                        </li>
+                        <li>
+                            <p><strong>Insira dados nas tabelas:</strong></p>
+                            <ul>
+                                <li>Insira pelo menos 3 alunos na tabela `ALUNOS`.</li>
+                                <li>Insira pelo menos 2 professores na tabela `PROFESSORES`.</li>
+                                <li>Insira pelo menos 2 turmas na tabela `TURMAS`, associando-as aos professores
+                                    criados.</li>
+                                <li>Insira pelo menos 3 registros de notas na tabela `NOTAS`, associando-os a alunos e
+                                    turmas.</li>
+                            </ul>
+                            <button onclick="toggleAnswer('ansExL2')">Mostrar Gabarito</button>
+                            <div class="answer" id="ansExL2">
+                                <pre><code class="language-sql">
+-- Inserir alunos
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('João Silva', TO_DATE('2005/05/15', 'YYYY/MM/DD'), 'M', 'joao.silva@email.com', TO_DATE('2020-02-10', 'YYYY-MM-DD'), 'Ativo');
+
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('Maria Oliveira', TO_DATE('2004-07-21', 'YYYY-MM/DD'), 'F', 'maria.oliveira@email.com', TO_DATE('2019-03-01', 'YYYY-MM-DD'), 'Ativo');
+
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, TELEFONE, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('Pedro Santos', TO_DATE('2006-03-20', 'YYYY-MM-DD'), '81 9876-1234', 'M', 'pedro.santos@email.com', TO_DATE('2021-02-15', 'YYYY-MM-DD'), 'Transferido');
+
+-- Inserir professores
+INSERT INTO PROFESSORES (NOME, ESPECIALIDADE, DT_ADIMISSAO, TELEFONE, EMAIL, SALARIO)
+VALUES ('Carlos Souza', 'Matemática', TO_DATE('2015-02-25', 'YYYY-MM-DD'), '99999-1234', 'carlos.souza@email.com', 3500.00);
+
+INSERT INTO PROFESSORES (NOME, ESPECIALIDADE, DT_ADIMISSAO, TELEFONE, EMAIL, SALARIO)
+VALUES ('Ana Costa', 'Português', TO_DATE('2017-06-10', 'YYYY-MM-DD'), '99999-5678', 'ana.costa@email.com', 3000.00);
+
+-- Inserir turmas (assumindo que Carlos Souza tem ID 1 e Ana Costa tem ID 2)
+INSERT INTO TURMAS (ANO_LETIVO, SERIE, TURNO, PROFESSOR_ID, NUMERO_ALUNOS)
+VALUES (2025, '8º Ano', 'M', 1, 28);
+
+INSERT INTO TURMAS (ANO_LETIVO, SERIE, TURNO, PROFESSOR_ID, NUMERO_ALUNOS)
+VALUES (2025, '9º Ano', 'T', 2, 22);
+
+-- Inserir notas (assumindo que João Silva tem ID 1, Maria Oliveira tem ID 2, Turma 8º Ano tem ID 1, Turma 9º Ano tem ID 2)
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, MATERIA, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (1, 1, 'Matemática', 8.5, 7.0, 9.0, 8.0, 8.13);
+
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, MATERIA, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (2, 2, 'Português', 9.0, 8.5, 7.5, 9.5, 8.63);
+
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, MATERIA, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (1, 1, 'História', 7.0, 6.5, 8.0, 7.5, 7.25);
+
+COMMIT;
+                                </code></pre>
+                            </div>
+                        </li>
+                        <li>
+                            <p><strong>Atualize dados:</strong></p>
+                            <ul>
+                                <li>Mude o `TELEFONE` do aluno 'João Silva'.</li>
+                                <li>Aumente o `SALARIO` de todos os professores de 'Português' em 15%.</li>
+                                <li>Atualize o `NUMERO_ALUNOS` de uma turma específica.</li>
+                            </ul>
+                            <button onclick="toggleAnswer('ansExL3')">Mostrar Gabarito</button>
+                            <div class="answer" id="ansExL3">
+                                <pre><code class="language-sql">
+UPDATE ALUNOS
+SET TELEFONE = '81 99999-9999'
+WHERE Upper(NOME) = 'JOÃO SILVA';
+
+UPDATE PROFESSORES
+SET SALARIO = SALARIO * 1.15
+WHERE ESPECIALIDADE = 'Português';
+
+UPDATE TURMAS
+SET NUMERO_ALUNOS = 30
+WHERE SERIE = '8º Ano' AND TURNO = 'M';
+
+COMMIT;
+                                </code></pre>
+                            </div>
+                        </li>
+                        <li>
+                            <p><strong>Consulte os dados:</strong></p>
+                            <ul>
+                                <li>Selecione todas as colunas de todos os alunos.</li>
+                                <li>Selecione `NOME`, `ESPECIALIDADE` e `SALARIO` dos professores que ganham mais de
+                                    R$3200.</li>
+                                <li>Conte quantos alunos existem com `STATUS_MATRICULA` 'Ativo'.</li>
+                                <li>Selecione o `NOME` do aluno e a `MEDIA_FINAL` de suas notas, ordenando pela média
+                                    final em ordem decrescente.</li>
+                            </ul>
+                            <button onclick="toggleAnswer('ansExL4')">Mostrar Gabarito</button>
+                            <div class="answer" id="ansExL4">
+                                <pre><code class="language-sql">
+SELECT * FROM ALUNOS;
+
+SELECT NOME, ESPECIALIDADE, SALARIO
+FROM PROFESSORES
+WHERE SALARIO > 3200;
+
+SELECT COUNT(*) AS ALUNOS_ATIVOS
+FROM ALUNOS
+WHERE STATUS_MATRICULA = 'Ativo';
+
+SELECT A.NOME, N.MATERIA, N.MEDIA_FINAL
+FROM ALUNOS A
+JOIN NOTAS N ON A.ID = N.ALUNO_ID
+ORDER BY N.MEDIA_FINAL DESC;
+                                </code></pre>
+                            </div>
+                        </li>
+                        <li>
+                            <p><strong>Exclua um registro e teste o `ROLLBACK`:</strong></p>
+                            <ul>
+                                <li>Exclua um registro de `NOTAS` específico.</li>
+                                <li>Faça um `SELECT` para verificar se ele foi excluído.</li>
+                                <li>Execute um `ROLLBACK`.</li>
+                                <li>Faça outro `SELECT` para verificar se o registro voltou (após o rollback).</li>
+                            </ul>
+                            <button onclick="toggleAnswer('ansExL5')">Mostrar Gabarito</button>
+                            <div class="answer" id="ansExL5">
+                                <pre><code class="language-sql">
+DELETE FROM NOTAS
+WHERE ALUNO_ID = 1 AND MATERIA = 'História'; -- Exclui a nota de História do João Silva
+
+SELECT * FROM NOTAS WHERE ALUNO_ID = 1; -- Observe que a nota de História não aparece
+
+ROLLBACK; -- Desfaz a exclusão
+
+SELECT * FROM NOTAS WHERE ALUNO_ID = 1; -- A nota de História deve aparecer novamente
+                                </code></pre>
+                            </div>
+                        </li>
+                        <li>
+                            <p><strong>Remova as tabelas:</strong></p>
+                            <ul>
+                                <li>Remova completamente todas as tabelas criadas, na ordem correta, usando `DROP TABLE
+                                    CASCADE CONSTRAINTS`.</li>
+                            </ul>
+                            <button onclick="toggleAnswer('ansExL6')">Mostrar Gabarito</button>
+                            <div class="answer" id="ansExL6">
+                                <pre><code class="language-sql">
+DROP TABLE NOTAS CASCADE CONSTRAINTS;
+DROP TABLE TURMAS CASCADE CONSTRAINTS;
+DROP TABLE ALUNOS CASCADE CONSTRAINTS;
+DROP TABLE PROFESSORES CASCADE CONSTRAINTS;
+                                </code></pre>
+                            </div>
+                        </li>
+                        <li>
+                            <p><strong>(Desafio) Limpe os dados da tabela <code>ALUNOS</code> usando `TRUNCATE` e
+                                    verifique o auto-incremento:</strong></p>
+                            <ul>
+                                <li>Recrie apenas a tabela `ALUNOS`.</li>
+                                <li>Insira alguns dados.</li>
+                                <li>Execute o `TRUNCATE TABLE` na `ALUNOS`.</li>
+                                <li>Insira um novo dado e observe qual ID é gerado. Ele deve ter reiniciado para 1.</li>
+                            </ul>
+                            <button onclick="toggleAnswer('ansExL7')">Mostrar Gabarito</button>
+                            <div class="answer" id="ansExL7">
+                                <pre><code class="language-sql">
+-- Recriar apenas a tabela ALUNOS (necessário se você já a dropou)
+CREATE TABLE ALUNOS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    NOME VARCHAR2(255) NOT NULL,
+    DATA_NASCIMENTO DATE NOT NULL,
+    DATA_MATRIICULA DATE NOT NULL
+);
+
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, DATA_MATRIICULA) VALUES ('Aluno Teste 1', SYSDATE, SYSDATE);
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, DATA_MATRIICULA) VALUES ('Aluno Teste 2', SYSDATE, SYSDATE);
+COMMIT; -- Salva as inserções
+
+SELECT * FROM ALUNOS; -- Veja os IDs gerados (e.g., 1, 2)
+
+TRUNCATE TABLE ALUNOS; -- Limpa a tabela e reinicia o contador
+-- COMMIT implícito após TRUNCATE
+
+SELECT * FROM ALUNOS; -- Deve estar vazia
+
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, DATA_MATRIICULA) VALUES ('Primeiro Aluno Após Truncate', SYSDATE, SYSDATE);
+SELECT * FROM ALUNOS; -- O ID gerado deve ser 1 novamente
+                                </code></pre>
+                            </div>
+                        </li>
+                    </ol>
+                </div>
+            </div>
+
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                // Function to load the menu
+                function loadMenu() {
+                    fetch('/menu.html')
+                        .then(response => response.text())
+                        .then(data => {
+                            document.getElementById('menu-placeholder').innerHTML = data;
+                            initializeSidebar(); // Initialize sidebar functionality after loading menu
+                        })
+                        .catch(error => console.error('Error loading menu:', error));
+                }
+
+                function initializeSidebar() {
+                    const hamburgerMenu = document.getElementById('hamburger-menu');
+                    const sidebar = document.getElementById('sidebar');
+                    const content = document.getElementById('content');
+                    const overlay = document.getElementById('overlay');
+                    const sidebarLinks = sidebar.querySelectorAll('a');
+
+                    function toggleSidebar() {
+                        sidebar.classList.toggle('active');
+                        content.classList.toggle('sidebar-active');
+                        overlay.classList.toggle('active');
+                    }
+
+                    hamburgerMenu.addEventListener('click', toggleSidebar);
+                    overlay.addEventListener('click', toggleSidebar);
+
+                    sidebarLinks.forEach(link => {
+                        link.addEventListener('click', function () {
+                            if (sidebar.classList.contains('active')) {
+                                toggleSidebar();
+                            }
+                        });
+                    });
+
+                    function highlightActiveLink() {
+                        const currentPath = window.location.pathname.split('/').pop();
+                        sidebarLinks.forEach(link => {
+                            const linkPath = link.getAttribute('href');
+                            if (linkPath === currentPath || (currentPath === '' && linkPath === 'index.html')) {
+                                link.classList.add('active');
+                            } else {
+                                link.classList.remove('active');
+                            }
+                        });
+                    }
+
+                    highlightActiveLink();
+                }
+
+                // Load the menu when the DOM is ready
+                loadMenu();
+
+                window.toggleAnswer = function (id) {
+                    var x = document.getElementById(id);
+                    if (x.style.display === "none" || x.style.display === "") {
+                        x.style.display = "block";
+                    } else {
+                        x.style.display = "none";
+                    }
+                };
+            });
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PL/SQL - Tratamento de Exceções e Pacotes</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+</head>
+
+<body>
+  <div id="menu-placeholder"></div>
+
+  <div class="content" id="content">
+    <header>
+      <h1>PL/SQL - Tratamento de Exceções e Pacotes</h1>
+      <p>Gerencie erros de forma elegante e organize seu código com o poder das exceções e pacotes PL/SQL.</p>
+    </header>
+
+    <div class="main-section">
+
+      <div class="sub-section">
+        <h2>1️⃣ Tratamento de Exceções <i class="fas fa-bug"></i></h2>
+        <blockquote>
+          <p>O tratamento de exceções em PL/SQL permite que você lide com erros de tempo de execução de forma
+            controlada, evitando que seu programa aborte inesperadamente.</p>
+        </blockquote>
+        <div class="card">
+          <h3>Bloco <code>EXCEPTION</code>:</h3>
+          <p>Qualquer bloco PL/SQL pode ter uma seção <code>EXCEPTION</code>, que é executada quando um erro ocorre no
+            bloco <code>BEGIN...END</code> correspondente.</p>
+          <pre><code class="language-sql">
+DECLARE
+  v_nome_aluno ALUNOS.NOME%TYPE;
+  v_aluno_id NUMBER := 999; -- ID que pode não existir
+BEGIN
+  SELECT NOME INTO v_nome_aluno
+  FROM ALUNOS
+  WHERE ID = v_aluno_id;
+
+  DBMS_OUTPUT.PUT_LINE('Nome do aluno: ' || v_nome_aluno);
+
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN -- Exceção predefinida
+    DBMS_OUTPUT.PUT_LINE('Erro: Aluno com ID ' || v_aluno_id || ' não encontrado.');
+  WHEN TOO_MANY_ROWS THEN -- Exceção predefinida
+    DBMS_OUTPUT.PUT_LINE('Erro: Múltiplos alunos encontrados para o ID ' || v_aluno_id || '.');
+  WHEN OTHERS THEN -- Captura qualquer outra exceção
+    DBMS_OUTPUT.PUT_LINE('Ocorreu um erro inesperado: ' || SQLERRM);
+    -- SQLCODE retorna o número do erro Oracle
+    -- SQLERRM retorna a mensagem de erro Oracle
+END;
+/
+          </code></pre>
+          <h3>Tipos de Exceções:</h3>
+          <ul>
+            <li><strong>Exceções Predefinidas:</strong> Erros comuns do Oracle que já possuem um nome.
+              <ul>
+                <li><code>NO_DATA_FOUND</code>: Um <code>SELECT INTO</code> não retornou nenhuma linha.</li>
+                <li><code>TOO_MANY_ROWS</code>: Um <code>SELECT INTO</code> retornou mais de uma linha.</li>
+                <li><code>DUP_VAL_ON_INDEX</code>: Tentativa de inserir um valor duplicado em uma coluna com índice
+                  UNIQUE.</li>
+                <li><code>ZERO_DIVIDE</code>: Tentativa de dividir por zero.</li>
+                <li><code>INVALID_NUMBER</code>: Conversão inválida de string para número.</li>
+                <li><code>VALUE_ERROR</code>: Erro de truncamento ou conversão de dados.</li>
+              </ul>
+            </li>
+            <li><strong>Exceções Não Predefinidas (Padrão Oracle):</strong> Erros do Oracle que não têm um nome. Podem
+              ser associadas a um nome usando `EXCEPTION_INIT`.</li>
+            <li><strong>Exceções Definidas pelo Usuário:</strong> Você pode criar suas próprias exceções para lógica de
+              negócio específica.</li>
+          </ul>
+
+          <h3>Exceções Definidas pelo Usuário:</h3>
+          <p>Duas formas principais:</p>
+          <ul>
+            <li>
+              <strong>Declarando uma Exceção Nomeada:</strong>
+              <pre><code class="language-sql">
+DECLARE
+  e_saldo_insuficiente EXCEPTION; -- Declara a exceção
+  v_saldo NUMBER := 100;
+  v_valor_saque NUMBER := 150;
+BEGIN
+  IF v_valor_saque > v_saldo THEN
+    RAISE e_saldo_insuficiente; -- Levanta a exceção
+  END IF;
+  DBMS_OUTPUT.PUT_LINE('Saque realizado com sucesso!');
+EXCEPTION
+  WHEN e_saldo_insuficiente THEN
+    DBMS_OUTPUT.PUT_LINE('Erro: Saldo insuficiente para o saque.');
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Erro inesperado: ' || SQLERRM);
+END;
+/
+              </code></pre>
+            </li>
+            <li>
+              <strong>Usando <code>RAISE_APPLICATION_ERROR</code>:</strong>
+              <p>É a forma preferida para retornar erros de negócio para a aplicação cliente, pois permite definir um
+                número de erro (entre -20000 e -20999) e uma mensagem personalizada.</p>
+              <pre><code class="language-sql">
+CREATE OR REPLACE PROCEDURE DEBITAR_CONTA (
+  p_conta_id IN NUMBER,
+  p_valor IN NUMBER
+)
+IS
+  v_saldo_atual NUMBER;
+BEGIN
+  SELECT SALDO INTO v_saldo_atual
+  FROM CONTAS
+  WHERE ID = p_conta_id;
+
+  IF p_valor > v_saldo_atual THEN
+    -- Levanta uma exceção com código e mensagem personalizados
+    RAISE_APPLICATION_ERROR(-20005, 'Saldo insuficiente na conta ' || p_conta_id || '. Saldo atual: ' || v_saldo_atual || ', Tentativa de débito: ' || p_valor);
+  END IF;
+
+  UPDATE CONTAS
+  SET SALDO = SALDO - p_valor
+  WHERE ID = p_conta_id;
+  COMMIT;
+
+  DBMS_OUTPUT.PUT_LINE('Débito de ' || p_valor || ' na conta ' || p_conta_id || ' realizado com sucesso.');
+
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    RAISE_APPLICATION_ERROR(-20006, 'Conta ' || p_conta_id || ' não encontrada.');
+  WHEN OTHERS THEN
+    RAISE_APPLICATION_ERROR(-20007, 'Erro inesperado ao debitar conta: ' || SQLERRM);
+END;
+/
+              </code></pre>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h2>2️⃣ Pacotes PL/SQL (Packages) <i class="fas fa-box-open"></i></h2>
+        <blockquote>
+          <p>Pacotes são unidades lógicas que agrupam objetos PL/SQL relacionados (procedures, functions, variáveis,
+            cursores, exceções). Eles consistem em duas partes: a **especificação (cabeçalho)** e o **corpo
+            (implementação)**.</p>
+        </blockquote>
+        <div class="card">
+          <h3>Vantagens dos Pacotes:</h3>
+          <ul>
+            <li><strong>Modularidade:</strong> Organiza o código em unidades lógicas, facilitando a manutenção.</li>
+            <li><strong>Encapsulamento:</strong> Você pode esconder a implementação (corpo) de procedimentos/funções e
+              variáveis da visibilidade externa, expondo apenas a interface (especificação).</li>
+            <li><strong>Reusabilidade:</strong> Objetos dentro de um pacote podem ser acessados por diferentes
+              aplicações e outros objetos de banco de dados.</li>
+            <li><strong>Performance:</strong> Quando um item do pacote é chamado pela primeira vez, o pacote inteiro é
+              carregado na memória. Chamadas subsequentes a outros itens do mesmo pacote são mais rápidas.</li>
+            <li><strong>Gerenciamento de Dependências:</strong> Reduz as dependências entre módulos. Se o corpo de um
+              pacote for alterado, não é necessário recompilar objetos que dependem da especificação, a menos que a
+              especificação em si mude.</li>
+          </ul>
+
+          <h3>2.1. Especificação do Pacote (Package Specification):</h3>
+          <p>Define a interface pública do pacote. Declara todos os itens (procedures, functions, variáveis, cursores,
+            exceções) que podem ser acessados de fora do pacote.</p>
+          <pre><code class="language-sql">
+CREATE OR REPLACE PACKAGE PKG_GESTAO_ALUNOS AS
+  -- Variável pública
+  G_MAX_ALUNOS_POR_TURMA CONSTANT NUMBER := 30;
+
+  -- Exceção pública
+  E_ALUNO_JA_EXISTE EXCEPTION;
+  PRAGMA EXCEPTION_INIT(E_ALUNO_JA_EXISTE, -20001); -- Associar a um código de erro
+
+  -- Procedure pública
+  PROCEDURE INSERIR_ALUNO (
+    p_nome IN ALUNOS.NOME%TYPE,
+    p_email IN ALUNOS.EMAIL%TYPE,
+    p_data_nascimento IN ALUNOS.DATA_NASCIMENTO%TYPE
+  );
+
+  -- Function pública
+  FUNCTION GET_MEDIA_NOTA_ALUNO (
+    p_aluno_id IN ALUNOS.ID%TYPE
+  ) RETURN NUMBER;
+
+END PKG_GESTAO_ALUNOS;
+/
+          </code></pre>
+
+          <h3>2.2. Corpo do Pacote (Package Body):</h3>
+          <p>Contém a implementação real das procedures e functions declaradas na especificação, além de quaisquer
+            objetos privados (procedures, functions, variáveis, cursores) que não são visíveis externamente ao pacote.
+          </p>
+          <pre><code class="language-sql">
+CREATE OR REPLACE PACKAGE BODY PKG_GESTAO_ALUNOS AS
+
+  -- Variável privada (visível apenas dentro do corpo do pacote)
+  v_contador_insercoes NUMBER := 0;
+
+  -- Procedure privada (visível apenas dentro do corpo do pacote)
+  PROCEDURE LOG_OPERACAO (p_mensagem IN VARCHAR2) IS
+  BEGIN
+    INSERT INTO LOG_AUDITORIA (MENSAGEM, DATA_HORA) VALUES (p_mensagem, SYSDATE);
+    COMMIT;
+  END LOG_OPERACAO;
+
+  -- Implementação da procedure pública
+  PROCEDURE INSERIR_ALUNO (
+    p_nome IN ALUNOS.NOME%TYPE,
+    p_email IN ALUNOS.EMAIL%TYPE,
+    p_data_nascimento IN ALUNOS.DATA_NASCIMENTO%TYPE
+  )
+  IS
+    v_count NUMBER;
+  BEGIN
+    SELECT COUNT(*) INTO v_count FROM ALUNOS WHERE EMAIL = p_email;
+    IF v_count > 0 THEN
+      -- Levanta a exceção pública definida na especificação
+      RAISE E_ALUNO_JA_EXISTE;
+    END IF;
+
+    INSERT INTO ALUNOS (ID, NOME, EMAIL, DATA_NASCIMENTO, STATUS_MATRICULA)
+    VALUES (SEQ_ALUNOS_ID.NEXTVAL, p_nome, p_email, p_data_nascimento, 'Ativo'); -- Assumindo SEQ_ALUNOS_ID existente
+
+    v_contador_insercoes := v_contador_insercoes + 1;
+    LOG_OPERACAO('Aluno ' || p_nome || ' inserido com sucesso.');
+    COMMIT;
+
+  EXCEPTION
+    WHEN E_ALUNO_JA_EXISTE THEN
+      -- O erro já foi levantado com RAISE E_ALUNO_JA_EXISTE
+      -- A mensagem da exceção já está associada ao código -20001
+      NULL; -- Ou adicione tratamento específico
+    WHEN OTHERS THEN
+      LOG_OPERACAO('Erro ao inserir aluno ' || p_nome || ': ' || SQLERRM);
+      ROLLBACK;
+      RAISE; -- Re-lança a exceção para o chamador
+  END INSERIR_ALUNO;
+
+  -- Implementação da function pública
+  FUNCTION GET_MEDIA_NOTA_ALUNO (
+    p_aluno_id IN ALUNOS.ID%TYPE
+  ) RETURN NUMBER
+  IS
+    v_media NUMBER;
+  BEGIN
+    SELECT AVG(NOTA) INTO v_media
+    FROM NOTAS
+    WHERE ALUNO_ID = p_aluno_id;
+
+    RETURN NVL(v_media, 0); -- Retorna 0 se não houver notas
+  EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+      RETURN 0;
+    WHEN OTHERS THEN
+      LOG_OPERACAO('Erro ao obter média do aluno ' || p_aluno_id || ': ' || SQLERRM);
+      RETURN NULL;
+  END GET_MEDIA_NOTA_ALUNO;
+
+END PKG_GESTAO_ALUNOS;
+/
+          </code></pre>
+          <h3>Como Usar um Pacote:</h3>
+          <pre><code class="language-sql">
+-- Acessar uma procedure do pacote
+SET SERVEROUTPUT ON;
+BEGIN
+  -- Supondo que a tabela ALUNOS e a sequence SEQ_ALUNOS_ID existam
+  -- E que você tenha criado o pacote PKG_GESTAO_ALUNOS
+  PKG_GESTAO_ALUNOS.INSERIR_ALUNO('Maria Silva', 'maria.silva@email.com', TO_DATE('15-MAR-2001', 'DD-MON-YYYY'));
+  DBMS_OUTPUT.PUT_LINE('Aluno inserido via pacote.');
+
+  -- Tentar inserir o mesmo email (deve levantar a exceção)
+  PKG_GESTAO_ALUNOS.INSERIR_ALUNO('Outro Nome', 'maria.silva@email.com', TO_DATE('01-JAN-2002', 'DD-MON-YYYY'));
+
+EXCEPTION
+  WHEN PKG_GESTAO_ALUNOS.E_ALUNO_JA_EXISTE THEN
+    DBMS_OUTPUT.PUT_LINE('Capturado erro: Aluno já existe (código -20001)!');
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Erro geral: ' || SQLERRM);
+END;
+/
+
+-- Acessar uma function do pacote
+SELECT PKG_GESTAO_ALUNOS.GET_MEDIA_NOTA_ALUNO(1) FROM DUAL; -- Supondo ID 1 para um aluno existente
+          </code></pre>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <h2>Exercícios e Desafios <i class="fas fa-question-circle"></i></h2>
+        <p>Para solidificar seu aprendizado, tente resolver os seguintes desafios:</p>
+        <div class="card">
+          <ol>
+            <li>
+              Crie uma procedure chamada `TRANSFERIR_NOTA` que receba `p_aluno_origem_id`, `p_aluno_destino_id` e
+              `p_disciplina`. Essa procedure deve transferir a nota de uma disciplina específica do aluno de origem para
+              o aluno de destino, e depois excluir a nota do aluno de origem. Implemente tratamento de exceções para:
+              <ul>
+                <li>`NO_DATA_FOUND`: Se o aluno de origem não tiver nota na disciplina especificada.</li>
+                <li>`OTHERS`: Para qualquer outro erro inesperado, realizando um `ROLLBACK`.</li>
+              </ul>
+              <button onclick="toggleAnswer('ansEx1')">Mostrar Gabarito</button>
+              <div class="answer" id="ansEx1">
+                <pre><code class="language-sql">
+CREATE OR REPLACE PROCEDURE TRANSFERIR_NOTA (
+  p_aluno_origem_id IN NOTAS.ALUNO_ID%TYPE,
+  p_aluno_destino_id IN NOTAS.ALUNO_ID%TYPE,
+  p_disciplina IN NOTAS.DISCIPLINA%TYPE
+)
+IS
+  v_nota NOTAS.NOTA%TYPE;
+  v_turma_id NOTAS.TURMA_ID%TYPE;
+  -- Verifica se os alunos de fato existem
+  v_origem_existe NUMBER;
+  v_destino_existe NUMBER;
+BEGIN
+  -- Validação de existência dos alunos
+  SELECT COUNT(*) INTO v_origem_existe FROM ALUNOS WHERE ID = p_aluno_origem_id;
+  SELECT COUNT(*) INTO v_destino_existe FROM ALUNOS WHERE ID = p_aluno_destino_id;
+
+  IF v_origem_existe = 0 THEN
+    RAISE_APPLICATION_ERROR(-20010, 'Aluno de origem (ID: ' || p_aluno_origem_id || ') não encontrado.');
+  END IF;
+
+  IF v_destino_existe = 0 THEN
+    RAISE_APPLICATION_ERROR(-20011, 'Aluno de destino (ID: ' || p_aluno_destino_id || ') não encontrado.');
+  END IF;
+
+  -- 1. Obter a nota e turma do aluno de origem
+  SELECT NOTA, TURMA_ID INTO v_nota, v_turma_id
+  FROM NOTAS
+  WHERE ALUNO_ID = p_aluno_origem_id
+  AND DISCIPLINA = p_disciplina;
+
+  -- 2. Inserir a nota para o aluno de destino
+  INSERT INTO NOTAS (ID, ALUNO_ID, DISCIPLINA, NOTA, TURMA_ID)
+  VALUES (SEQ_NOTAS_ID.NEXTVAL, p_aluno_destino_id, p_disciplina, v_nota, v_turma_id);
+
+  -- 3. Excluir a nota do aluno de origem
+  DELETE FROM NOTAS
+  WHERE ALUNO_ID = p_aluno_origem_id
+  AND DISCIPLINA = p_disciplina;
+
+  COMMIT;
+  DBMS_OUTPUT.PUT_LINE('Nota da disciplina ' || p_disciplina || ' transferida de ' || p_aluno_origem_id || ' para ' || p_aluno_destino_id || ' com sucesso.');
+
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    -- A exceção NO_DATA_FOUND aqui significa que o aluno de origem não tem a nota na disciplina
+    RAISE_APPLICATION_ERROR(-20008, 'Aluno ' || p_aluno_origem_id || ' não possui nota para a disciplina ' || p_disciplina || '.');
+  WHEN OTHERS THEN
+    ROLLBACK;
+    RAISE_APPLICATION_ERROR(-20009, 'Erro inesperado ao transferir nota: ' || SQLERRM);
+END;
+/
+
+-- Para testar, você precisará de dados de teste nas tabelas ALUNOS e NOTAS.
+-- Exemplo de uso (assumindo IDs de alunos e disciplinas válidos):
+SET SERVEROUTPUT ON;
+BEGIN
+  -- Criar dados de teste (se necessário)
+  -- INSERT INTO ALUNOS (ID, NOME, EMAIL, STATUS_MATRICULA) VALUES (1, 'Aluno A', 'a@e.com', 'Ativo');
+  -- INSERT INTO ALUNOS (ID, NOME, EMAIL, STATUS_MATRICULA) VALUES (2, 'Aluno B', 'b@e.com', 'Ativo');
+  -- INSERT INTO NOTAS (ID, ALUNO_ID, DISCIPLINA, NOTA, TURMA_ID) VALUES (100, 1, 'Matematica', 8.5, 1); -- Assumindo TURMA_ID 1
+  -- INSERT INTO NOTAS (ID, ALUNO_ID, DISCIPLINA, NOTA, TURMA_ID) VALUES (SEQ_NOTAS_ID.NEXTVAL, 1, 'Portugues', 7.0, 1);
+  -- COMMIT;
+
+  TRANSFERIR_NOTA(1, 2, 'Matematica'); -- Tente transferir uma nota existente
+  -- TRANSFERIR_NOTA(1, 2, 'Inexistente'); -- Tente transferir uma nota inexistente (NO_DATA_FOUND)
+  -- TRANSFERIR_NOTA(999, 2, 'Matematica'); -- Tente com aluno origem inexistente (-20010)
+  -- TRANSFERIR_NOTA(1, 999, 'Matematica'); -- Tente com aluno destino inexistente (-20011)
+
+END;
+/
+                </code></pre>
+              </div>
+            </li>
+            <li>
+              Crie um pacote chamado `PKG_RELATORIOS` com as seguintes funcionalidades:
+              <ul>
+                <li>Uma função `GET_ALUNOS_ATIVOS` que retorne o número total de alunos com `STATUS_MATRICULA =
+                  'Ativo'`.</li>
+                <li>Uma procedure `GERAR_RELATORIO_DISCIPLINAS` que exiba o nome de todas as disciplinas e a média de
+                  notas de cada uma.</li>
+              </ul>
+              <button onclick="toggleAnswer('ansEx2')">Mostrar Gabarito</button>
+              <div class="answer" id="ansEx2">
+                <pre><code class="language-sql">
+-- ESPECIFICAÇÃO DO PACOTE
+CREATE OR REPLACE PACKAGE PKG_RELATORIOS AS
+
+  FUNCTION GET_ALUNOS_ATIVOS RETURN NUMBER;
+
+  PROCEDURE GERAR_RELATORIO_DISCIPLINAS;
+
+END PKG_RELATORIOS;
+/
+
+-- CORPO DO PACOTE
+CREATE OR REPLACE PACKAGE BODY PKG_RELATORIOS AS
+
+  FUNCTION GET_ALUNOS_ATIVOS RETURN NUMBER IS
+    v_total_ativos NUMBER;
+  BEGIN
+    SELECT COUNT(*) INTO v_total_ativos
+    FROM ALUNOS
+    WHERE STATUS_MATRICULA = 'Ativo';
+
+    RETURN v_total_ativos;
+  EXCEPTION
+    WHEN OTHERS THEN
+      DBMS_OUTPUT.PUT_LINE('Erro na função GET_ALUNOS_ATIVOS: ' || SQLERRM);
+      RETURN NULL; -- Ou levante a exceção
+  END GET_ALUNOS_ATIVOS;
+
+  PROCEDURE GERAR_RELATORIO_DISCIPLINAS IS
+  BEGIN
+    DBMS_OUTPUT.PUT_LINE('--- Relatório de Médias por Disciplina ---');
+    FOR r_disciplina IN (SELECT DISCIPLINA, AVG(NOTA) AS MediaNotas
+                         FROM NOTAS
+                         GROUP BY DISCIPLINA
+                         ORDER BY DISCIPLINA) LOOP
+      DBMS_OUTPUT.PUT_LINE('Disciplina: ' || r_disciplina.DISCIPLINA || ' - Média: ' || ROUND(r_disciplina.MediaNotas, 2));
+    END LOOP;
+    DBMS_OUTPUT.PUT_LINE('----------------------------------------');
+
+  EXCEPTION
+    WHEN OTHERS THEN
+      DBMS_OUTPUT.PUT_LINE('Erro na procedure GERAR_RELATORIO_DISCIPLINAS: ' || SQLERRM);
+  END GERAR_RELATORIO_DISCIPLINAS;
+
+END PKG_RELATORIOS;
+/
+
+-- Teste do Pacote:
+SET SERVEROUTPUT ON;
+BEGIN
+  -- Testar a função
+  DBMS_OUTPUT.PUT_LINE('Total de alunos ativos: ' || PKG_RELATORIOS.GET_ALUNOS_ATIVOS);
+
+  -- Testar a procedure
+  PKG_RELATORIOS.GERAR_RELATORIO_DISCIPLINAS;
+END;
+/
+                </code></pre>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Function to load the menu
+      function loadMenu() {
+        fetch('/menu.html')
+          .then(response => response.text())
+          .then(data => {
+            document.getElementById('menu-placeholder').innerHTML = data;
+            initializeSidebar(); // Initialize sidebar functionality after loading menu
+          })
+          .catch(error => console.error('Error loading menu:', error));
+      }
+
+      function initializeSidebar() {
+        const hamburgerMenu = document.getElementById('hamburger-menu');
+        const sidebar = document.getElementById('sidebar');
+        const content = document.getElementById('content');
+        const overlay = document.getElementById('overlay');
+        const sidebarLinks = sidebar.querySelectorAll('a');
+
+        function toggleSidebar() {
+          sidebar.classList.toggle('active');
+          content.classList.toggle('sidebar-active');
+          overlay.classList.toggle('active');
+        }
+
+        hamburgerMenu.addEventListener('click', toggleSidebar);
+        overlay.addEventListener('click', toggleSidebar);
+
+        sidebarLinks.forEach(link => {
+          link.addEventListener('click', function () {
+            if (sidebar.classList.contains('active')) {
+              toggleSidebar();
+            }
+          });
+        });
+
+        function highlightActiveLink() {
+          const currentPath = window.location.pathname.split('/').pop();
+          sidebarLinks.forEach(link => {
+            const linkPath = link.getAttribute('href');
+            if (linkPath === currentPath || (currentPath === '' && linkPath === 'index.html')) {
+              link.classList.add('active');
+            } else {
+              link.classList.remove('active');
+            }
+          });
+        }
+
+        highlightActiveLink();
+      }
+
+      // Load the menu when the DOM is ready
+      loadMenu();
+
+      window.toggleAnswer = function (id) {
+        var x = document.getElementById(id);
+        if (x.style.display === "none" || x.style.display === "") {
+          x.style.display = "block";
+        } else {
+          x.style.display = "none";
+        }
+      };
+    });
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+</body>
+
+</html>

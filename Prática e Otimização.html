@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prática e Otimização em SQL/PLSQL</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+</head>
+
+<body>
+  <div id="menu-placeholder"></div>
+
+  <div class="content" id="content">
+    <header>
+      <h1>Prática e Otimização em SQL/PLSQL</h1>
+      <p>Dominando a arte de escrever consultas eficientes e otimizar o desempenho do seu código no Oracle.</p>
+    </header>
+
+    <div class="main-section">
+
+      <div class="sub-section">
+        <h2>1️⃣ Boas Práticas na Escrita SQL <i class="fas fa-magic"></i></h2>
+        <blockquote>
+          <p>Escrever SQL claro e eficiente é o primeiro passo para garantir um bom desempenho. Lembre-se que um banco
+            de dados grande amplifica os efeitos de um código mal escrito.</p>
+        </blockquote>
+        <div class="card">
+          <ul>
+            <li><strong>Use <code>WHERE</code> para Filtrar Cedo:</strong> Sempre que possível, utilize a cláusula
+              <code>WHERE</code> para reduzir o número de linhas processadas o mais cedo possível.
+            </li>
+            <li><strong>Evite <code>SELECT *</code>:</strong> Selecione apenas as colunas de que você realmente precisa.
+              Isso reduz o tráfego de rede, o uso de memória e a carga de I/O.</li>
+            <li><strong>Indexação Adequada:</strong> Crie índices em colunas frequentemente usadas em cláusulas
+              <code>WHERE</code>, <code>JOIN</code>, <code>ORDER BY</code> e <code>GROUP BY</code>. Mas não exagere,
+              índices adicionam overhead em operações DML.
+            </li>
+            <li><strong>Cuidado com Funções em Cláusulas <code>WHERE</code>:</strong> Aplicar funções a colunas
+              indexadas em cláusulas <code>WHERE</code> pode impedir o uso do índice (Ex: `WHERE TRUNC(data_coluna) =
+              ...`). Tente reescrever a condição para que o índice possa ser usado (Ex: `WHERE data_coluna >= TRUNC(...)
+              AND data_coluna < TRUNC(...) + 1`).</li>
+            <li><strong>Preferir <code>JOINs</code> a Subconsultas (quando aplicável):</strong> Embora subconsultas
+              sejam poderosas, em muitos casos, um <code>JOIN</code> bem otimizado pode ter um desempenho superior,
+              especialmente quando o otimizador pode reescrever a consulta de forma mais eficiente.</li>
+            <li><strong>Evite <code>OR</code> em Colunas Não Indexadas:</strong> Múltiplas condições com <code>OR</code>
+              em colunas não indexadas podem levar a escaneamentos de tabela completos. Considere <code>UNION ALL</code>
+              ou indexação.</li>
+            <li><strong>Uso Consciente de <code>DISTINCT</code>:</strong> <code>DISTINCT</code> pode ser custoso,
+              especialmente em grandes conjuntos de dados, pois exige uma ordenação e desduplicação. Use-o apenas quando
+              necessário.</li>
+            <li><strong>Evite `ORDER BY` sem necessidade:</strong> A ordenação é uma operação custosa. Use `ORDER BY`
+              apenas quando a ordem dos resultados for estritamente necessária.</li>
+            <li><strong>Qualifique Nomes de Objetos:</strong> Use `SCHEMA.TABLE.COLUMN` ou `ALIAS.COLUMN` para evitar
+              ambiguidades e melhorar a legibilidade.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h2>2️⃣ Otimização de Consultas com <code>EXPLAIN PLAN</code> <i class="fas fa-microscope"></i></h2>
+        <blockquote>
+          <p>O <code>EXPLAIN PLAN</code> é uma ferramenta essencial no Oracle para entender como o banco de dados
+            executa uma consulta. Ele mostra o "plano de execução", que é a sequência de operações que o otimizador de
+            consultas escolhe para obter os dados.</p>
+        </blockquote>
+        <div class="card">
+          <h3>Como Usar:</h3>
+          <p>Você pode usar a sintaxe <code>EXPLAIN PLAN FOR</code> antes da sua consulta.</p>
+          <pre><code class="language-sql">
+EXPLAIN PLAN FOR
+SELECT A.NOME, N.NOTA
+FROM ALUNOS A
+JOIN NOTAS N ON A.ID = N.ALUNO_ID
+WHERE N.NOTA > 7.0
+AND A.CIDADE = 'Recife';
+
+-- Para ver o resultado do plano:
+SELECT PLAN_TABLE_OUTPUT FROM TABLE(DBMS_XPLAN.DISPLAY);
+          </code></pre>
+          <h3>Interpretando o Plano (Básico):</h3>
+          <ul>
+            <li><strong>Operation (Operação):</strong> Descreve a ação que o Oracle está executando (ex: `TABLE ACCESS
+              FULL`, `INDEX UNIQUE SCAN`, `NESTED LOOPS`).</li>
+            <li><strong>Object Name (Nome do Objeto):</strong> A tabela, índice ou view envolvida na operação.</li>
+            <li><strong>Rows (Linhas):</strong> Estimativa do número de linhas que a operação produzirá ou processará.
+            </li>
+            <li><strong>Cost (Custo):</strong> Estimativa do custo relativo da operação. Um custo menor geralmente
+              indica um plano mais eficiente. O custo total é a soma dos custos individuais.</li>
+            <li><strong>Bytes:</strong> Estimativa do número de bytes que a operação produzirá.</li>
+            <li><strong>Id (Identificador):</strong> Número que identifica a operação no plano.</li>
+            <li><strong>Parent_Id (ID Pai):</strong> O ID da operação "pai", indicando a hierarquia.</li>
+          </ul>
+          <p><strong>Dicas para Interpretação:</strong></p>
+          <ul>
+            <li>Procure por `TABLE ACCESS FULL` em tabelas grandes; isso pode indicar a falta de um índice ou um índice
+              não utilizado.</li>
+            <li>`INDEX UNIQUE SCAN` e `INDEX RANGE SCAN` geralmente são desejáveis, indicando o uso eficiente de
+              índices.</li>
+            <li>Considere o custo total. Seu objetivo é reduzir esse valor.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h2>3️⃣ Otimização de Desempenho em PL/SQL <i class="fas fa-tachometer-alt"></i></h2>
+        <blockquote>
+          <p>No PL/SQL, a performance é frequentemente impactada pela interação com o SQL. Reduzir o número de "context
+            switches" (trocas entre o motor PL/SQL e o motor SQL) é fundamental.</p>
+        </blockquote>
+        <div class="card">
+          <h3>3.1. SQL Tuning dentro do PL/SQL:</h3>
+          <p>As boas práticas de SQL aplicam-se integralmente ao SQL incorporado em blocos PL/SQL. Uma consulta lenta
+            dentro de um loop PL/SQL pode degradar drasticamente a performance.</p>
+          <h3>3.2. Técnicas de Processamento em Massa (Bulk Processing):</h3>
+          <p>Para operações com grandes volumes de dados, evite processar uma linha de cada vez (row-by-row processing).
+            O Oracle oferece mecanismos para processar dados em "lotes" (batches), minimizando as trocas de contexto.
+          </p>
+          <ul>
+            <li>
+              <strong><code>FORALL</code> (para DML):</strong>
+              <p>Usado para executar uma instrução DML (<code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>)
+                para cada elemento em uma coleção PL/SQL. É muito mais rápido do que um loop com DMLs individuais.</p>
+              <pre><code class="language-sql">
+DECLARE
+  TYPE tp_ids_alunos IS TABLE OF ALUNOS.ID%TYPE INDEX BY PLS_INTEGER;
+  v_ids tp_ids_alunos;
+BEGIN
+  -- Popula a coleção (ex: IDs de alunos a serem atualizados)
+  SELECT ID BULK COLLECT INTO v_ids FROM ALUNOS WHERE STATUS_MATRICULA = 'Ativo';
+
+  IF v_ids.COUNT > 0 THEN
+    FORALL i IN v_ids.FIRST..v_ids.LAST
+      UPDATE ALUNOS
+      SET STATUS_MATRICULA = 'Concluido'
+      WHERE ID = v_ids(i);
+  END IF;
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+    DBMS_OUTPUT.PUT_LINE('Erro: ' || SQLERRM);
+END;
+/
+              </code></pre>
+            </li>
+            <li>
+              <strong><code>BULK COLLECT</code> (para <code>SELECT</code>):</strong>
+              <p>Usado com a cláusula <code>INTO</code> de um <code>SELECT</code> para buscar múltiplas linhas em uma
+                coleção PL/SQL de uma só vez, em vez de uma por uma com um cursor tradicional.</p>
+              <pre><code class="language-sql">
+DECLARE
+  TYPE tp_alunos IS TABLE OF ALUNOS%ROWTYPE;
+  v_alunos tp_alunos;
+BEGIN
+  -- Busca todos os alunos ativos de uma vez
+  SELECT * BULK COLLECT INTO v_alunos
+  FROM ALUNOS
+  WHERE STATUS_MATRICULA = 'Ativo';
+
+  -- Processa a coleção em PL/SQL (sem mais trocas de contexto)
+  FOR i IN v_alunos.FIRST..v_alunos.LAST LOOP
+    DBMS_OUTPUT.PUT_LINE('Aluno: ' || v_alunos(i).NOME || ' - Email: ' || v_alunos(i).EMAIL);
+  END LOOP;
+END;
+/
+              </code></pre>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h2>4️⃣ Gerenciamento de Estatísticas do Otimizador <i class="fas fa-chart-bar"></i></h2>
+        <blockquote>
+          <p>O otimizador de consultas do Oracle depende muito das <strong>estatísticas</strong> dos objetos do banco de
+            dados (tabelas, índices) para gerar os melhores planos de execução. Estatísticas desatualizadas ou ausentes
+            podem levar a planos ineficientes e, consequentemente, a um desempenho ruim.</p>
+        </blockquote>
+        <div class="card">
+          <h3>Por que são Importantes?</h3>
+          <p>As estatísticas fornecem ao otimizador informações sobre a distribuição dos dados, o número de linhas, o
+            número de blocos, a densidade de colunas, etc. Com base nessas informações, o otimizador pode estimar com
+            precisão o custo de diferentes planos de execução e escolher o mais eficiente.</p>
+          <h3>Como Coletar Estatísticas:</h3>
+          <p>O Oracle pode coletar estatísticas automaticamente (via tarefas agendadas), mas você também pode fazer isso
+            manualmente, especialmente após grandes alterações nos dados (cargas em massa, exclusões significativas).
+          </p>
+          <pre><code class="language-sql">
+-- Coleta estatísticas para uma tabela e seus índices
+EXEC DBMS_STATS.GATHER_TABLE_STATS(
+    ownname => 'SEU_SCHEMA',        -- Substitua pelo nome do seu schema
+    tabname => 'SUA_TABELA',        -- Substitua pelo nome da sua tabela
+    estimate_percent => DBMS_STATS.AUTO_SAMPLE_SIZE, -- Percentual da tabela para amostrar
+    degree => DBMS_STATS.DEFAULT_DEGREE, -- Grau de paralelismo
+    cascade => TRUE                 -- Coleta estatísticas para índices e colunas
+);
+
+-- Para todo o schema:
+EXEC DBMS_STATS.GATHER_SCHEMA_STATS(
+    ownname => 'SEU_SCHEMA',
+    estimate_percent => DBMS_STATS.AUTO_SAMPLE_SIZE,
+    degree => DBMS_STATS.DEFAULT_DEGREE,
+    cascade => TRUE
+);
+          </code></pre>
+          <h3>Dicas:</h3>
+          <ul>
+            <li><strong>Frequência:</strong> Garanta que as estatísticas sejam coletadas regularmente, especialmente em
+              tabelas com alta taxa de modificação de dados.</li>
+            <li><strong>Amostragem:</strong> `DBMS_STATS.AUTO_SAMPLE_SIZE` geralmente é suficiente, mas em tabelas muito
+              grandes e com distribuição de dados complexa, uma amostragem maior ou até mesmo a coleta completa (`100`)
+              pode ser considerada.</li>
+            <li><strong>Impacto:</strong> A coleta de estatísticas pode consumir recursos. Agende-a para períodos de
+              baixa atividade.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h2>5️⃣ Hints (Dicas para o Otimizador) <i class="fas fa-lightbulb"></i></h2>
+        <blockquote>
+          <p>Hints são comentários especiais que você pode adicionar às suas instruções SQL para "sugerir" ao otimizador
+            do Oracle como você gostaria que a consulta fosse executada. Embora o otimizador geralmente faça um bom
+            trabalho por conta própria, há situações em que você, como desenvolvedor, conhece melhor os dados ou o
+            ambiente e pode guiar o otimizador para um plano mais eficiente.</p>
+        </blockquote>
+        <div class="card">
+          <h3>Quando Usar Hints?</h3>
+          <ul>
+            <li>Quando o otimizador não está gerando um plano eficiente, mesmo com estatísticas atualizadas.</li>
+            <li>Em ambientes controlados para testar e fixar planos de execução específicos.</li>
+            <li>Para solucionar problemas de desempenho pontuais.</li>
+          </ul>
+          <h3>Como Usar:</h3>
+          <p>Hints são colocados em comentários após a palavra-chave <code>SELECT</code>, <code>INSERT</code>,
+            <code>UPDATE</code> ou <code>DELETE</code>, dentro de <code>/*+ ... */</code>.
+          </p>
+          <pre><code class="language-sql">
+-- Forçar um "Full Table Scan" na tabela ALUNOS
+SELECT /*+ FULL(a) */ a.nome, a.data_nascimento
+FROM ALUNOS a
+WHERE a.status_matricula = 'Ativo';
+
+-- Forçar o uso de um índice específico para a tabela ALUNOS
+SELECT /*+ INDEX(a IDX_ALUNOS_DT_NASC) */ a.nome, a.data_nascimento
+FROM ALUNOS a
+WHERE a.data_nascimento > TO_DATE('01-JAN-2000', 'DD-MON-YYYY');
+
+-- Forçar um tipo de JOIN (ex: NESTED LOOPS)
+SELECT /*+ USE_NL(e d) */ e.nome, d.nome_departamento
+FROM EMPREGADOS e
+JOIN DEPARTAMENTOS d ON e.id_departamento = d.id;
+          </code></pre>
+          <h3>Cuidado!</h3>
+          <ul>
+            <li><strong>Último Recurso:</strong> Use hints com moderação e apenas quando estritamente necessário. O
+              otimizador geralmente é mais inteligente.</li>
+            <li><strong>Manutenção:</strong> Hints podem se tornar um problema de manutenção. Se a distribuição dos
+              dados ou a estrutura da tabela mudar, um hint que era bom antes pode se tornar prejudicial.</li>
+            <li><strong>Teste:</strong> Sempre teste exaustivamente consultas com hints em ambientes de desenvolvimento
+              e homologação antes de aplicar em produção.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h2>6️⃣ Ferramentas de Profiling em PL/SQL <i class="fas fa-tools"></i></h2>
+        <blockquote>
+          <p>Além do <code>EXPLAIN PLAN</code> para SQL, o Oracle oferece ferramentas para analisar o desempenho do seu
+            código PL/SQL, identificando gargalos e partes que consomem mais tempo.</p>
+        </blockquote>
+        <div class="card">
+          <h3><code>DBMS_PROFILER</code></h3>
+          <p>Este pacote permite que você execute seu código PL/SQL e colete estatísticas detalhadas sobre o tempo de
+            execução de cada linha e unidade de código (funções, procedures, pacotes).</p>
+          <pre><code class="language-sql">
+-- 1. Habilitar o profiler (uma vez por sessão)
+-- Se as tabelas de profiler não existirem, você precisará criá-las primeiro
+-- @?/rdbms/admin/profload.sql
+EXEC DBMS_PROFILER.START_PROFILER('Nome da Execucao');
+
+-- 2. Execute seu bloco PL/SQL, procedure ou função aqui
+BEGIN
+  -- Seu código PL/SQL a ser perfilado
+  FOR i IN 1..100000 LOOP
+    INSERT INTO minha_tabela (col1) VALUES (i);
+  END LOOP;
+  COMMIT;
+END;
+/
+
+-- 3. Parar o profiler
+EXEC DBMS_PROFILER.STOP_PROFILER;
+
+-- 4. Analisar os resultados (usando tabelas do profiler)
+-- Exemplo de consulta para ver as unidades que mais consumiram tempo
+SELECT
+    u.unit_name,
+    s.total_time,
+    s.total_occurrences,
+    s.total_lines
+FROM
+    plsql_profiler_runs r
+JOIN
+    plsql_profiler_units u ON r.runid = u.runid
+JOIN
+    plsql_profiler_data s ON u.runid = s.runid AND u.unit_number = s.unit_number
+WHERE
+    r.run_comment = 'Nome da Execucao'
+ORDER BY
+    s.total_time DESC;
+          </code></pre>
+          <h3><code>DBMS_HPROF</code> (Hierarchical Profiler)</h3>
+          <p><code>DBMS_HPROF</code> é uma ferramenta mais moderna e poderosa que fornece uma visão hierárquica do tempo
+            de execução, permitindo ver chamadas de subprogramas e o tempo gasto em cada nível da pilha de chamadas. Ele
+            gera um arquivo de trace que pode ser analisado com a ferramenta <code>tkprof</code>.</p>
+          <pre><code class="language-sql">
+-- 1. Habilitar o HProf
+-- Define o diretório onde o arquivo de trace será gerado (precisa ser um diretório do Oracle)
+CREATE DIRECTORY HPROF_DIR AS '/tmp'; -- Crie este diretório no servidor Oracle, se não existir
+
+DECLARE
+    v_run_id NUMBER;
+BEGIN
+    v_run_id := DBMS_HPROF.START_PROFILING(
+        location => 'HPROF_DIR',
+        filename => 'my_plsql_profile.trc'
+    );
+
+    -- 2. Execute seu bloco PL/SQL, procedure ou função aqui
+    FOR i IN 1..100000 LOOP
+        INSERT INTO minha_tabela (col1) VALUES (i);
+    END LOOP;
+    COMMIT;
+
+    DBMS_HPROF.STOP_PROFILING(v_run_id);
+END;
+/
+          </code></pre>
+          <p>Após a execução, você precisará usar a ferramenta de linha de comando `tkprof` no servidor para formatar o
+            arquivo `.trc` em um relatório legível.</p>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <h2>Exercícios e Desafios <i class="fas fa-question-circle"></i></h2>
+        <p>Para solidificar seu aprendizado, tente resolver os seguintes desafios:</p>
+        <div class="card">
+          <ol>
+            <li>
+              Imagine uma consulta que busca todos os alunos que nasceram após 1º de janeiro de 2000 e têm "Silva" no
+              nome. Escreva essa consulta e, em seguida, use o `EXPLAIN PLAN` para ver seu plano de execução. Baseado no
+              plano, que sugestões de otimização você daria (pensando em índices, se aplicável)?
+              <button onclick="toggleAnswer('ansEx1')">Mostrar Gabarito</button>
+              <div class="answer" id="ansEx1">
+                <pre><code class="language-sql">
+-- Consulta
+SELECT ID, NOME, DATA_NASCIMENTO
+FROM ALUNOS
+WHERE DATA_NASCIMENTO > TO_DATE('01-JAN-2000', 'DD-MON-YYYY')
+AND NOME LIKE '%Silva%';
+
+-- Para ver o plano de execução:
+EXPLAIN PLAN FOR
+SELECT ID, NOME, DATA_NASCIMENTO
+FROM ALUNOS
+WHERE DATA_NASCIMENTO > TO_DATE('01-JAN-2000', 'DD-MON-YYYY')
+AND NOME LIKE '%Silva%';
+
+SELECT PLAN_TABLE_OUTPUT FROM TABLE(DBMS_XPLAN.DISPLAY);
+
+-- Sugestões de Otimização (Baseadas em um plano comum):
+-- 1. Se a coluna DATA_NASCIMENTO for frequentemente usada em WHERE, considere criar um índice nela:
+--    CREATE INDEX IDX_ALUNOS_DT_NASC ON ALUNOS (DATA_NASCIMENTO);
+-- 2. A condição `LIKE '%Silva%'` impede o uso de um índice na coluna NOME para o início da string (range scan).
+--    Se o filtro principal for por sobrenome, e 'Silva' for comum no meio/fim, um índice na coluna NOME ainda pode ser útil
+--    se a query for combinada com outros filtros mais seletivos ou se o otimizador decidir usar.
+--    Para `LIKE '%valor%'`, a Oracle precisaria de um INDEX FULL SCAN ou FULL TABLE SCAN (se não houver outros índices).
+--    Em alguns casos, índices baseados em funções ou Oracle Text Search podem ser considerados para pesquisas de texto mais complexas.
+-- 3. Certifique-se de que a tabela ALUNOS não é muito pequena, pois para tabelas pequenas, um TABLE ACCESS FULL pode ser mais rápido do que usar um índice.
+                </code></pre>
+              </div>
+            </li>
+            <li>
+              Crie um bloco PL/SQL que atualize o `STATUS_MATRICULA` de todos os alunos da tabela `ALUNOS` de 'Ativo'
+              para 'Concluido' para aqueles que têm uma nota média superior a 7.0 em todas as suas disciplinas. Use
+              `BULK COLLECT` para buscar os IDs dos alunos e `FORALL` para realizar a atualização.
+              <button onclick="toggleAnswer('ansEx2')">Mostrar Gabarito</button>
+              <div class="answer" id="ansEx2">
+                <pre><code class="language-sql">
+DECLARE
+  TYPE tp_aluno_id IS TABLE OF ALUNOS.ID%TYPE;
+  v_alunos_para_atualizar tp_aluno_id;
+BEGIN
+  -- 1. Usar BULK COLLECT para obter os IDs dos alunos que se encaixam no critério
+  SELECT A.ID BULK COLLECT INTO v_alunos_para_atualizar
+  FROM ALUNOS A
+  WHERE A.STATUS_MATRICULA = 'Ativo'
+  AND (SELECT AVG(N.NOTA)
+        FROM NOTAS N
+        WHERE N.ALUNO_ID = A.ID) > 7.0;
+
+  -- 2. Usar FORALL para atualizar em massa
+  IF v_alunos_para_atualizar.COUNT > 0 THEN
+    FORALL i IN v_alunos_para_atualizar.FIRST..v_alunos_para_atualizar.LAST
+      UPDATE ALUNOS
+      SET STATUS_MATRICULA = 'Concluido'
+      WHERE ID = v_alunos_para_atualizar(i);
+    COMMIT;
+    DBMS_OUTPUT.PUT_LINE(v_alunos_para_atualizar.COUNT || ' alunos atualizados para "Concluido".');
+  ELSE
+    DBMS_OUTPUT.PUT_LINE('Nenhum aluno encontrado para atualização.');
+  END IF;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+    DBMS_OUTPUT.PUT_LINE('Ocorreu um erro: ' || SQLERRM);
+END;
+/
+                </code></pre>
+              </div>
+            </li>
+            <li>
+              Explique brevemente a vantagem de usar `FORALL` e `BULK COLLECT` em PL/SQL para operações com muitos
+              dados, em comparação com o processamento linha a linha (looping com um `SELECT INTO` ou DMLs individuais).
+              <button onclick="toggleAnswer('ansEx3')">Mostrar Gabarito</button>
+              <div class="answer" id="ansEx3">
+                <p>A principal vantagem de `FORALL` e `BULK COLLECT` é a **redução do número de trocas de contexto
+                  (context switches)** entre o motor PL/SQL e o motor SQL. Cada vez que o PL/SQL precisa interagir com o
+                  SQL (para buscar uma linha, inserir uma linha, etc.), ocorre uma troca de contexto que consome
+                  recursos e tempo.</p>
+                <ul>
+                  <li>Com o **processamento linha a linha**, se você tem 1000 registros para processar, o PL/SQL fará
+                    1000 chamadas separadas ao motor SQL.</li>
+                  <li>Com **`BULK COLLECT`**, o PL/SQL busca *todos* (ou um lote definido de) os 1000 registros em *uma
+                    única* chamada ao motor SQL, preenchendo uma coleção. O processamento subsequente dessa coleção
+                    ocorre inteiramente no motor PL/SQL, sem novas trocas de contexto para cada linha.</li>
+                  <li>Com **`FORALL`**, da mesma forma, o PL/SQL envia *todos* (ou um lote definido de) os 1000 comandos
+                    DML para o motor SQL em *uma única* chamada. O motor SQL então executa esses comandos em massa, de
+                    forma muito mais eficiente.</li>
+                </ul>
+                <p>Isso resulta em uma **melhora significativa no desempenho** para operações com grandes volumes de
+                  dados, pois reduz o overhead de comunicação entre os dois motores.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Function to load the menu
+      function loadMenu() {
+        fetch('/menu.html')
+          .then(response => response.text())
+          .then(data => {
+            document.getElementById('menu-placeholder').innerHTML = data;
+            initializeSidebar(); // Initialize sidebar functionality after loading menu
+          })
+          .catch(error => console.error('Error loading menu:', error));
+      }
+
+      function initializeSidebar() {
+        const hamburgerMenu = document.getElementById('hamburger-menu');
+        const sidebar = document.getElementById('sidebar');
+        const content = document.getElementById('content');
+        const overlay = document.getElementById('overlay');
+        const sidebarLinks = sidebar.querySelectorAll('a');
+
+        function toggleSidebar() {
+          sidebar.classList.toggle('active');
+          content.classList.toggle('sidebar-active');
+          overlay.classList.toggle('active');
+        }
+
+        hamburgerMenu.addEventListener('click', toggleSidebar);
+        overlay.addEventListener('click', toggleSidebar);
+
+        sidebarLinks.forEach(link => {
+          link.addEventListener('click', function () {
+            if (sidebar.classList.contains('active')) {
+              toggleSidebar();
+            }
+          });
+        });
+
+        function highlightActiveLink() {
+          const currentPath = window.location.pathname.split('/').pop();
+          sidebarLinks.forEach(link => {
+            const linkPath = link.getAttribute('href');
+            if (linkPath === currentPath || (currentPath === '' && linkPath === 'index.html')) {
+              link.classList.add('active');
+            } else {
+              link.classList.remove('active');
+            }
+          });
+        }
+
+        highlightActiveLink();
+      }
+
+      // Load the menu when the DOM is ready
+      loadMenu();
+
+      window.toggleAnswer = function (id) {
+        var x = document.getElementById(id);
+        if (x.style.display === "none" || x.style.display === "") {
+          x.style.display = "block";
+        } else {
+          x.style.display = "none";
+        }
+      };
+    });
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+</body>
+
+</html>

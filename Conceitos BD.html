@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conceitos Fundamentais de Banco de Dados - PL/SQL</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+</head>
+
+<body>
+    <div id="menu-placeholder"></div>
+
+    <div class="content" id="content">
+        <header>
+            <h1>Conceitos Fundamentais de Banco de Dados</h1>
+            <p>Entenda os pilares que sustentam a organização e manipulação de dados em sistemas computacionais. Uma
+                base sólida é o primeiro passo para dominar SQL e PL/SQL.</p>
+        </header>
+
+        <div class="main-section">
+
+            <div class="sub-section">
+                <h2>1️⃣ O que é um Banco de Dados? <i class="fas fa-database"></i></h2>
+                <blockquote>
+                    <p>Um banco de dados é uma coleção organizada de informações (dados) estruturadas, tipicamente
+                        armazenadas eletronicamente em um sistema de computador. Ele é projetado para facilitar o
+                        armazenamento, recuperação, modificação e gerenciamento de dados.</p>
+                </blockquote>
+                <p>Imagine um banco de dados como uma biblioteca digital gigante, onde cada livro (informação) é
+                    organizado e categorizado para que você possa encontrá-lo, adicioná-lo ou atualizá-lo facilmente.
+                </p>
+                <div class="card">
+                    <h4>Exemplo Conceitual: 📚 Base de Livros</h4>
+                    <p>Se você tem uma coleção de livros, o "banco de dados" seria a sua coleção organizada. Cada livro
+                        tem informações como Título, Autor, Gênero, Ano de Publicação. Um banco de dados digital faria
+                        essa organização de forma eficiente para acesso rápido.</p>
+                </div>
+            </div>
+
+            <div class="sub-section">
+                <h2>2️⃣ Dados, Informação e Conhecimento <i class="fas fa-info-circle"></i></h2>
+                <p>É fundamental entender a hierarquia e a distinção entre esses termos:</p>
+                <dl>
+                    <dt><strong>Dados:</strong></dt>
+                    <dd>Fatos brutos, sem contexto ou significado por si só. Ex: "25", "João", "Recife".</dd>
+                    <dt><strong>Informação:</strong></dt>
+                    <dd>Dados processados e contextualizados, que adquirem significado. Ex: "João tem 25 anos e mora em
+                        Recife."</dd>
+                    <dt><strong>Conhecimento:</strong></dt>
+                    <dd>Informação aplicada e compreendida, que permite tomar decisões ou obter insights. Ex: "Jovens de
+                        25 anos em Recife tendem a buscar imóveis na zona sul."</dd>
+                </dl>
+                <div class="card">
+                    <h4>Exemplo Prático: 📊 Vendas de Produtos</h4>
+                    <p><strong>Dados:</strong> "10", "Teclado", "2024-05-20", "R$ 150.00"</p>
+                    <p><strong>Informação:</strong> "Em 20 de maio de 2024, foram vendidas 10 unidades do produto
+                        'Teclado' por R$ 150.00 cada."</p>
+                    <p><strong>Conhecimento:</strong> "A venda de teclados aumentou em 10% no último mês, indicando uma
+                        boa oportunidade para promoções de periféricos em junho."</p>
+                </div>
+            </div>
+
+            <div class="sub-section">
+                <h2>3️⃣ Sistema de Gerenciamento de Banco de Dados (SGBD) <i class="fas fa-cogs"></i></h2>
+                <blockquote>
+                    <p>O SGBD é um software que interage com o usuário, com outras aplicações e com o próprio banco de
+                        dados para capturar e analisar os dados. Ele é a ponte entre você e os dados armazenados.</p>
+                </blockquote>
+                <p>Um SGBD de propósito geral é projetado para permitir a definição, criação, consulta, atualização e
+                    administração de bancos de dados. Exemplos comuns incluem Oracle, MySQL, PostgreSQL, SQL Server.</p>
+                <div class="card">
+                    <h4>Exemplo de Operação do SGBD: ⚙️ Criando uma Tabela</h4>
+                    <p>O comando SQL abaixo é enviado ao SGBD, que então o interpreta e cria a estrutura da tabela no
+                        banco de dados.</p>
+                    <pre><code class="language-sql">
+CREATE TABLE produtos (
+    id_produto NUMBER PRIMARY KEY,
+    nome_produto VARCHAR2(100),
+    preco NUMBER(10, 2)
+);
+                    </code></pre>
+                </div>
+            </div>
+
+            <div class="sub-section">
+                <h2>4️⃣ Ambiente e Ferramentas <i class="fas fa-tools"></i></h2>
+                <div class="card">
+                    <h3>Configurando seu Ambiente Oracle Local</h3>
+                    <p>Para interagir com o Oracle Database, você precisará de algumas ferramentas. Aqui estão as
+                        principais:</p>
+
+                    <h4>4.1. Ferramentas Cliente Oracle</h4>
+                    <ul>
+                        <li>
+                            <strong>Oracle SQL Developer (Recomendado para iniciantes):</strong> Uma IDE gráfica
+                            gratuita que facilita a navegação, escrita e execução de SQL/PL/SQL.
+                            <br>
+                            <a href="https://www.oracle.com/tools/downloads/sqldev-downloads.html" target="_blank"
+                                class="download-link"><i class="fas fa-download"></i> Baixar Oracle SQL Developer</a>
+                        </li>
+                        <li>
+                            <strong>Oracle SQLcl (Command Line):</strong> Uma ferramenta de linha de comando com
+                            recursos modernos, ideal para quem prefere ou precisa de um ambiente de terminal. É mais
+                            leve que o SQL Developer.
+                            <br>
+                            <a href="https://www.oracle.com/database/sqldeveloper/technologies/sqlcl/downloads/"
+                                target="_blank" class="download-link"><i class="fas fa-download"></i> Baixar Oracle
+                                SQLcl</a>
+                        </li>
+                    </ul>
+
+                    <h4>4.2. Ferramentas de Conexão e Gerenciamento (Opcional, mas útil)</h4>
+                    <ul>
+                        <li>
+                            <strong>SQLTools (Extensão para VS Code):</strong> Se você utiliza o Visual Studio Code para
+                            desenvolvimento, a extensão SQLTools permite conectar-se e gerenciar diversas bases de
+                            dados, incluindo Oracle. É excelente para ter seu código PL/SQL e SQL no mesmo ambiente de
+                            desenvolvimento.
+                            <br>
+                            <a href="https://marketplace.visualstudio.com/items?itemName=mtxr.sqltools" target="_blank"
+                                class="download-link"><i class="fas fa-external-link-alt"></i> Ver SQLTools no VS Code
+                                Marketplace</a>
+                        </li>
+                    </ul>
+
+                    <h4>4.3. Instalação e Configuração Básica</h4>
+                    <ul>
+                        <li>
+                            <strong>Oracle Instant Client (para SQLcl e SQLTools):</strong> Se você não instalou um
+                            banco de dados Oracle completo, precisará do Instant Client para que ferramentas como SQLcl
+                            ou SQLTools possam se conectar. Baixe a versão "Basic" ou "Basic Light".
+                            <br>
+                            <a href="https://www.oracle.com/database/technologies/instant-client/downloads.html"
+                                target="_blank" class="download-link"><i class="fas fa-download"></i> Baixar Oracle
+                                Instant Client</a>
+                            <p>Após baixar, descompacte em um diretório (ex: <code>C:\oracle\instantclient_21_x</code>).
+                                Você precisará adicionar este diretório à variável de ambiente <code>PATH</code> do seu
+                                sistema operacional.</p>
+                        </li>
+                        <li>
+                            <strong>Configuração da Variável de Ambiente PATH (Windows):</strong>
+                            <p>Adicionar o caminho do Instant Client e/ou do diretório <code>bin</code> do SQLcl/SQL
+                                Developer ao <code>PATH</code> permite que você execute os comandos diretamente do
+                                terminal.</p>
+                            <ol>
+                                <li>Pesquise por "Variáveis de Ambiente" no Windows.</li>
+                                <li>Clique em "Editar as variáveis de ambiente do sistema".</li>
+                                <li>Na aba "Avançado", clique em "Variáveis de Ambiente...".</li>
+                                <li>Na seção "Variáveis do Sistema", selecione "Path" e clique em "Editar...".</li>
+                                <li>Clique em "Novo" e adicione o caminho completo para a pasta onde você descompactou o
+                                    Instant Client (ex: <code>C:\oracle\instantclient_21_x</code>).</li>
+                                <li>Faça o mesmo para o diretório <code>bin</code> do SQLcl/SQL Developer, se desejar
+                                    executá-los via linha de comando.</li>
+                                <li>Clique em "OK" em todas as janelas para fechar. Pode ser necessário reiniciar o
+                                    terminal.</li>
+                            </ol>
+                        </li>
+                        <li>
+                            <strong>Configuração da Variável de Ambiente <code>TNS_ADMIN</code> (Opcional, mas
+                                útil):</strong>
+                            <p>Se você usa um arquivo <code>tnsnames.ora</code> para configurar suas conexões, defina a
+                                variável de ambiente <code>TNS_ADMIN</code> para o diretório onde este arquivo está
+                                localizado. O Instant Client geralmente procura por ele no mesmo diretório, mas esta
+                                variável oferece mais controle.</p>
+                        </li>
+                    </ul>
+
+                    <h4>4.4. Credenciais de Conexão Comuns</h4>
+                    <ul>
+                        <li>
+                            <strong>Usuário <code>SYS</code>:</strong> É o superusuário do banco de dados Oracle.
+                            <br>
+                            <span class="highlight-info"><strong>Senha comumente utilizada para <code>SYS</code> durante
+                                    instalações de desenvolvimento ou em ambientes de exemplo:</strong> <code>123</code>
+                                ou <code>oracle</code>.</span>
+                            <br>
+                            <strong>Atenção:</strong> Em ambientes de produção, utilize senhas fortes e complexas, e
+                            nunca use senhas padrão.
+                        </li>
+                        <li>
+                            <strong>Usuário <code>SYSTEM</code>:</strong> Outro usuário administrativo, com amplos
+                            privilégios.
+                            <br>
+                            <span class="highlight-info"><strong>Senha comumente utilizada para
+                                    <code>SYSTEM</code>:</strong> <code>123</code> ou <code>oracle</code>.</span>
+                        </li>
+                        <li>
+                            <strong>Usuário de Desenvolvimento (ex: <code>HR</code>, <code>SCOTT</code>):</strong> Em
+                            muitos ambientes de exemplo, esquemas como <code>HR</code> (Human Resources) ou
+                            <code>SCOTT</code> (com a senha <code>TIGER</code>) vêm pré-instalados para fins de
+                            aprendizado e teste. Se eles não estiverem desbloqueados, você pode desbloqueá-los via
+                            usuário <code>SYS</code> ou <code>SYSTEM</code>.
+                        </li>
+                    </ul>
+
+                    <h4>4.5. Criando e Gerenciando um Novo Usuário de Desenvolvimento</h4>
+                    <p>É uma prática recomendada **NÃO** usar os usuários <code>SYS</code> ou <code>SYSTEM</code>
+                        diretamente para o desenvolvimento diário. Estes usuários possuem privilégios muito amplos e
+                        usá-los para tarefas comuns aumenta o risco de erros acidentais ou vulnerabilidades de
+                        segurança. O ideal é criar um usuário específico para suas atividades de desenvolvimento e
+                        conceder a ele apenas os privilégios necessários.</p>
+                    <pre><code class="language-sql">
+-- Conecte-se como SYS ou SYSTEM para executar estes comandos
+-- Exemplo: Conecte-se no SQL Developer com o usuário SYS e a senha '123' (ou a que você definiu)
+-- ou no SQLcl: CONNECT SYS/123 AS SYSDBA
+
+-- 1. Criar um novo usuário (ex: MEU_USUARIO) e definir uma senha
+CREATE USER MEU_USUARIO IDENTIFIED BY MinhaSenhaForte123;
+
+-- 2. Conceder privilégios essenciais ao novo usuário
+-- CONNECT: Permite ao usuário conectar-se ao banco de dados
+-- RESOURCE: Concede privilégios para criar tabelas, índices, sequences, triggers, etc.
+-- (Para ambientes de desenvolvimento, RESOURCE é geralmente suficiente para começar)
+GRANT CONNECT, RESOURCE TO MEU_USUARIO;
+
+-- 3. Conceder privilégios adicionais (se necessário, por exemplo, para criar procedures/functions)
+GRANT CREATE PROCEDURE TO MEU_USUARIO;
+GRANT CREATE VIEW TO MEU_USUARIO;
+GRANT UNLIMITED TABLESPACE TO MEU_USUARIO; -- Permite ao usuário usar espaço em disco sem limite
+
+-- 4. Para desbloquear um usuário existente (ex: HR ou SCOTT)
+-- Altere a senha se necessário (opcional)
+ALTER USER HR IDENTIFIED BY HR_NovaSenha ACCOUNT UNLOCK;
+                    </code></pre>
+                    <p>Após criar seu usuário, **sempre se conecte com ele** para realizar suas atividades de
+                        desenvolvimento.</p>
+                </div>
+            </div>
+
+            <div class="sub-section">
+                <h2>5️⃣ Conectando e Atalhos Essenciais nas Ferramentas <i class="fas fa-plug"></i></h2>
+                <div class="card">
+                    <h3>5.1. Oracle SQL Developer</h3>
+                    <h4>Como Conectar:</h4>
+                    <ol>
+                        <li>Abra o SQL Developer.</li>
+                        <li>No painel "Conexões" (geralmente à esquerda), clique no ícone de adição verde (<i
+                                class="fas fa-plus-circle"></i>) ou vá em "Arquivo" > "Nova Conexão de Banco de
+                            Dados...".</li>
+                        <li>Preencha os detalhes:
+                            <ul>
+                                <li><strong>Nome da Conexão:</strong> Dê um nome amigável (ex: `MEU_USUARIO_LOCAL`).
+                                </li>
+                                <li><strong>Nome de Usuário:</strong> `MEU_USUARIO` (ou `HR`, `SCOTT`, etc.).</li>
+                                <li><strong>Senha:</strong> A senha que você definiu para o usuário.</li>
+                                <li><strong>Tipo de Conexão:</strong> `Básico` (geralmente o padrão).</li>
+                                <li><strong>Nome do Host:</strong> `localhost` ou o IP do seu servidor Oracle.</li>
+                                <li><strong>Porta:</strong> `1521` (porta padrão do Oracle Listener).</li>
+                                <li><strong>SID/Nome do Serviço:</strong> Digite o SID (ex: `XE` para Oracle Express) ou
+                                    o Nome do Serviço (ex: `ORCLPDB1` para um PDB). Você pode verificar o SID ou Service
+                                    Name no seu `tnsnames.ora` ou na configuração do seu banco.</li>
+                            </ul>
+                        </li>
+                        <li>Clique em "Testar" para verificar a conexão. Se for "Status: Sucesso", clique em "Conectar".
+                        </li>
+                    </ol>
+                    <h4>Atalhos Úteis:</h4>
+                    <ul>
+                        <li><strong>Executar Script (ou a instrução atual):</strong> <kbd>F5</kbd> (Executa o script
+                            inteiro ou a instrução onde o cursor está posicionado, se selecionada).</li>
+                        <li><strong>Executar Instrução:</strong> <kbd>Ctrl + Enter</kbd> (Executa a instrução sob o
+                            cursor).</li>
+                        <li><strong>Comentar Linha(s):</strong> <kbd>Ctrl + /</kbd></li>
+                        <li><strong>Descomentar Linha(s):</strong> <kbd>Ctrl + Shift + /</kbd></li>
+                        <li><strong>Auto Completar (Code Insight):</strong> <kbd>Ctrl + Espaço</kbd></li>
+                        <li><strong>Formatar Código:</strong> <kbd>Ctrl + F7</kbd></li>
+                        <li><strong>Abrir Nova Planilha SQL:</strong> <kbd>Ctrl + Shift + N</kbd></li>
+                    </ul>
+
+                    <h3>5.2. SQLTools (VS Code Extension)</h3>
+                    <h4>Como Conectar:</h4>
+                    <ol>
+                        <li>No VS Code, abra a aba "SQLTools" (ícone de banco de dados na barra lateral esquerda).</li>
+                        <li>Clique em "Add New Connection" (<i class="fas fa-plus-circle"></i>).</li>
+                        <li>Selecione o "Driver" `Oracle`.</li>
+                        <li>Preencha os detalhes:
+                            <ul>
+                                <li><strong>Connection Name:</strong> Dê um nome (ex: `MeuOracleDev`).</li>
+                                <li><strong>Host:</strong> `localhost` ou o IP do seu servidor Oracle.</li>
+                                <li><strong>Port:</strong> `1521`.</li>
+                                <li><strong>SID/Service Name:</strong> O SID (ex: `XE`) ou Service Name (ex:
+                                    `ORCLPDB1`).</li>
+                                <li><strong>User:</strong> `MEU_USUARIO`.</li>
+                                <li><strong>Password:</strong> Sua senha.</li>
+                                <li><strong>Connect with TNS (Opcional):</strong> Se você usa `tnsnames.ora`, pode
+                                    ativar esta opção e selecionar seu TNS Entry. Certifique-se de que a variável de
+                                    ambiente `TNS_ADMIN` esteja configurada.</li>
+                            </ul>
+                        </li>
+                        <li>Clique em "Test Connection". Se bem-sucedido, clique em "Save Connection" e depois
+                            "Connect".</li>
+                    </ol>
+                    <h4>Atalhos Úteis (no VS Code com SQLTools):</h4>
+                    <ul>
+                        <li><strong>Executar Query Selecionada:</strong> <kbd>Ctrl + E</kbd> (ou <kbd>Cmd + E</kbd> no
+                            Mac).</li>
+                        <li><strong>Executar Query no Arquivo:</strong> <kbd>Ctrl + Alt + E</kbd> (ou <kbd>Cmd + Alt +
+                                E</kbd> no Mac).</li>
+                        <li><strong>Abrir Nova Planilha SQL:</strong> <kbd>Ctrl + Shift + P</kbd> e digite "SQLTools:
+                            New Query".</li>
+                        <li><strong>Formatar SQL:</strong> Clique com o botão direito no editor SQL e selecione "Format
+                            Document".</li>
+                        <li><strong>Comentar/Descomentar Linha:</strong> <kbd>Ctrl + /</kbd></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="sub-section">
+                <h2>6️⃣ SQL: A Linguagem do Banco de Dados <i class="fas fa-code"></i></h2>
+                <p>SQL (Structured Query Language) é a linguagem padrão utilizada para interagir com bancos de dados
+                    relacionais. É através do SQL que você "conversa" com o SGBD para criar estruturas, inserir dados,
+                    consultá-los e modificá-los.</p>
+                <div class="card">
+                    <h4>Subconjuntos do SQL:</h4>
+                    <ul>
+                        <li><strong>DQL (Data Query Language):</strong> Para consulta de dados (principalmente
+                            `SELECT`).</li>
+                        <li><strong>DDL (Data Definition Language):</strong> Para definir ou modificar a estrutura do
+                            banco (`CREATE`, `ALTER`, `DROP`).</li>
+                        <li><strong>DML (Data Manipulation Language):</strong> Para manipular os dados (`INSERT`,
+                            `UPDATE`, `DELETE`).</li>
+                        <li><strong>DCL (Data Control Language):</strong> Para controlar o acesso e as permissões
+                            (`GRANT`, `REVOKE`).</li>
+                        <li><strong>TCL (Transaction Control Language):</strong> Para gerenciar transações (`COMMIT`,
+                            `ROLLBACK`, `SAVEPOINT`).</li>
+                    </ul>
+                    <h4>Exemplo de DML: ✍️ Inserindo Dados</h4>
+                    <p>O comando `INSERT` é um exemplo de DML, usado para adicionar novos registros a uma tabela.</p>
+                    <pre><code class="language-sql">
+INSERT INTO Clientes (cliente_id, nome, email)
+VALUES (101, 'João Silva', 'joao.silva@email.com');
+                    </code></pre>
+                </div>
+            </div>
+
+            <div class="sub-section">
+                <h2>7️⃣ Transações: COMMIT e ROLLBACK <i class="fas fa-sync-alt"></i></h2>
+                <p>As transações são sequências de operações realizadas como uma única unidade lógica de trabalho. No
+                    Oracle (e em outros bancos de dados relacionais), elas são cruciais para garantir a integridade e
+                    consistência dos dados, especialmente em operações que envolvem múltiplas etapas.</p>
+                <div class="card">
+                    <dl>
+                        <dt><strong>COMMIT:</strong></dt>
+                        <dd>
+                            <p>O comando `COMMIT` é usado para salvar permanentemente todas as alterações feitas na base
+                                de dados desde o último `COMMIT` ou `ROLLBACK`. Uma vez que você faz um `COMMIT`, as
+                                alterações se tornam visíveis para outros usuários e são persistidas, ou seja, são
+                                gravadas no disco e não podem ser desfeitas por um `ROLLBACK`.</p>
+                            <pre><code class="language-sql">
+UPDATE produtos SET preco = 5000 WHERE id = 1000;
+COMMIT; -- Salva a alteração de preço permanentemente
+                        </code></pre>
+                        </dd>
+                        <dt><strong>ROLLBACK:</strong></dt>
+                        <dd>
+                            <p>O comando `ROLLBACK` é usado para desfazer todas as alterações feitas na base de dados
+                                desde o último `COMMIT` ou `ROLLBACK`. Isso é útil quando ocorre um erro ou você decide
+                                que as alterações não devem ser salvas. O banco de dados retorna ao estado em que estava
+                                antes do início da transação atual.</p>
+                            <pre><code class="language-sql">
+INSERT INTO clientes (id, nome) VALUES (1, 'Novo Cliente');
+-- Ops, percebi que inseri o cliente errado!
+ROLLBACK; -- Desfaz a inserção
+                        </code></pre>
+                        </dd>
+                    </dl>
+                    <p><span class="highlight-info"><strong>Importante:</strong></span> No SQL Developer e outras
+                        ferramentas, DDLs (como `CREATE TABLE`, `ALTER TABLE`, `DROP TABLE`) executam um `COMMIT`
+                        implícito. Isso significa que, ao executar um DDL, qualquer transação DML pendente será
+                        automaticamente salva.</p>
+                </div>
+            </div>
+
+
+            <div class="sub-section">
+                <h2>8️⃣ Modelo Relacional <i class="fas fa-link"></i></h2>
+                <blockquote>
+                    <p>É o modelo mais popular e amplamente utilizado. Os dados são organizados em tabelas (relações),
+                        que consistem em linhas (registros) e colunas (atributos). As relações entre os dados são
+                        estabelecidas através de chaves.</p>
+                </blockquote>
+                <p>Este curso focará principalmente no modelo relacional, que é a base do Oracle e da maioria dos bancos
+                    de dados empresariais.</p>
+                <div class="card">
+                    <h4>Exemplo de Relacionamento: 🤝 Clientes e Pedidos</h4>
+                    <p>No modelo relacional, a tabela <code>Clientes</code> pode se relacionar com a tabela
+                        <code>Pedidos</code> através do <code>cliente_id</code>, mostrando qual cliente fez qual pedido.
+                    </p>
+                    <pre><code class="language-sql">
+-- Tabela Clientes
+CREATE TABLE Clientes (
+    cliente_id NUMBER PRIMARY KEY,
+    nome VARCHAR2(100)
+);
+
+-- Tabela Pedidos
+CREATE TABLE Pedidos (
+    pedido_id NUMBER PRIMARY KEY,
+    cliente_id NUMBER, -- Chave Estrangeira
+    data_pedido DATE,
+    FOREIGN KEY (cliente_id) REFERENCES Clientes(cliente_id)
+);
+                    </code></pre>
+                </div>
+                <h3>8.2. Outros Modelos (brevemente) <i class="fas fa-cubes"></i></h3>
+                <div class="card">
+                    <ul>
+                        <li><strong>Modelo Hierárquico:</strong> Dados organizados em uma estrutura de árvore, onde cada
+                            nó tem um único pai.</li>
+                        <li><strong>Modelo de Rede:</strong> Extensão do modelo hierárquico, permitindo que um nó tenha
+                            múltiplos pais.</li>
+                        <li><strong>Modelo NoSQL:</strong> Não-relacionais, projetados para escalabilidade e dados não
+                            estruturados ou semi-estruturados (ex: documentos, grafos, chave-valor).</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="sub-section">
+                <h2>9️⃣ Chaves em Bancos de Dados <i class="fas fa-key"></i></h2>
+                <p>As chaves são atributos ou conjuntos de atributos que identificam exclusivamente um registro em uma
+                    tabela e estabelecem relacionamentos entre tabelas.</p>
+                <div class="card">
+                    <dl>
+                        <dt><strong>Chave Primária (Primary Key - PK):</strong></dt>
+                        <dd>Um atributo (ou conjunto de atributos) que identifica unicamente cada registro em uma
+                            tabela. Não pode conter valores nulos e cada valor deve ser único. É a "identidade" de cada
+                            linha na tabela.</dd>
+                        <dt><strong>Chave Estrangeira (Foreign Key - FK):</strong></dt>
+                        <dd>Um atributo (ou conjunto de atributos) em uma tabela que se refere à chave primária de outra
+                            tabela. Ela estabelece um elo lógico entre as duas tabelas, garantindo a integridade
+                            referencial.</dd>
+                        <dt><strong>Chave Candidata:</strong></dt>
+                        <dd>Qualquer atributo ou conjunto de atributos que possa ser uma chave primária (isto é, único e
+                            não nulo).</dd>
+                        <dt><strong>Chave Alternativa:</strong></dt>
+                        <dd>Chaves candidatas que não foram escolhidas como chave primária.</dd>
+                    </dl>
+                    <h4>Exemplo de Chaves Primária e Estrangeira: 🔑</h4>
+                    <pre><code class="language-sql">
+-- Tabela Professores
+CREATE TABLE Professores (
+    professor_id NUMBER PRIMARY KEY, -- Chave Primária
+    nome VARCHAR2(100),
+    especialidade VARCHAR2(50)
+);
+
+-- Tabela Disciplinas
+CREATE TABLE Disciplinas (
+    disciplina_id NUMBER PRIMARY KEY,
+    nome_disciplina VARCHAR2(100),
+    professor_responsavel_id NUMBER, -- Chave Estrangeira
+    FOREIGN KEY (professor_responsavel_id) REFERENCES Professores(professor_id)
+);
+                    </code></pre>
+                </div>
+            </div>
+
+            <div class="sub-section">
+                <h2>1️⃣0️⃣ Tipos de Dados Comuns (Oracle) <i class="fas fa-font"></i></h2>
+                <p>Ao criar colunas em tabelas, você precisa definir o tipo de dado que cada coluna irá armazenar. Aqui
+                    estão alguns dos tipos mais comuns no ambiente Oracle:</p>
+                <div class="card">
+                    <dl>
+                        <dt><strong>VARCHAR2(tamanho):</strong></dt>
+                        <dd>Usado para armazenar strings de caracteres de comprimento variável. `tamanho` define o
+                            comprimento máximo. Ex: `VARCHAR2(100)` para nomes. **É o mais recomendado para strings no
+                            Oracle.**</dd>
+                        <dt><strong>NVARCHAR2(tamanho):</strong></dt>
+                        <dd>Similar ao VARCHAR2, mas armazena dados em um conjunto de caracteres Unicode, ideal para
+                            suportar múltiplos idiomas.</dd>
+                        <dt><strong>NUMBER(precisão, escala):</strong></dt>
+                        <dd>Para armazenar valores numéricos. `precisão` é o número total de dígitos, e `escala` é o
+                            número de dígitos à direita do ponto decimal. Ex: `NUMBER(5)` para um inteiro até 99999;
+                            `NUMBER(10,2)` para valores com 2 casas decimais.</dd>
+                        <dt><strong>INT / INTEGER:</strong></dt>
+                        <dd>Sinônimo para `NUMBER(38)`, um número inteiro de grande precisão. Não é um tipo de dado
+                            separado no Oracle, mas é comumente usado por convenção.</dd>
+                        <dt><strong>FLOAT / REAL / DOUBLE PRECISION:</strong></dt>
+                        <dd>Para números de ponto flutuante, com menor precisão que `NUMBER` mas otimizados para
+                            cálculos científicos.</dd>
+                        <dt><strong>DATE:</strong></dt>
+                        <dd>Armazena valores de data e hora (século, ano, mês, dia, hora, minuto, segundo). Ex:
+                            '29-MAI-2025'.</dd>
+                        <dt><strong>TIMESTAMP:</strong></dt>
+                        <dd>Similar ao DATE, mas armazena data e hora com frações de segundos. Existem variações como
+                            `TIMESTAMP WITH TIME ZONE` (com fuso horário) e `TIMESTAMP WITH LOCAL TIME ZONE`.</dd>
+                        <dt><strong>CLOB (Character Large Object):</strong></dt>
+                        <dd>Para armazenar grandes blocos de texto (até gigabytes), como artigos, descrições longas,
+                            documentos JSON/XML.</dd>
+                        <dt><strong>BLOB (Binary Large Object):</strong></dt>
+                        <dd>Para armazenar grandes blocos de dados binários, como imagens, áudios, vídeos, arquivos PDF.
+                        </dd>
+                        <dt><strong>BOOLEAN:</strong></dt>
+                        <dd>No Oracle SQL nativamente não existe um tipo BOOLEAN. Booleans são geralmente representados
+                            usando `VARCHAR2(1)` para 'Y'/'N' ou 'T'/'F', ou `NUMBER(1)` para 1/0. Em PL/SQL, existe o
+                            tipo BOOLEAN para uso dentro de blocos de código.</dd>
+                    </dl>
+                    <h4>Exemplo de Tipos de Dados: 🔡🔢📅</h4>
+                    <pre><code class="language-sql">
+CREATE TABLE Eventos (
+    evento_id NUMBER PRIMARY KEY,
+    nome_evento VARCHAR2(200) NOT NULL,
+    data_hora TIMESTAMP,
+    descricao CLOB,
+    imagem_capa BLOB,
+    ativo VARCHAR2(1) CHECK (ativo IN ('S', 'N')) -- Representação de boolean
+);
+                    </code></pre>
+                </div>
+            </div>
+
+            <div class="sub-section">
+                <h2>1️⃣1️⃣ Restrições de Integridade (Constraints) <i class="fas fa-lock"></i></h2>
+                <p>Além das chaves primárias e estrangeiras, outras restrições garantem a qualidade e a validade dos
+                    dados em suas tabelas:</p>
+                <div class="card">
+                    <dl>
+                        <dt><strong>NOT NULL:</strong></dt>
+                        <dd>Garante que uma coluna não pode conter valores nulos. Ou seja, um valor deve ser fornecido
+                            para essa coluna em cada registro.</dd>
+                        <dt><strong>UNIQUE:</strong></dt>
+                        <dd>Garante que todos os valores em uma coluna (ou conjunto de colunas) sejam únicos. É
+                            semelhante a uma chave primária, mas permite valores nulos (geralmente apenas um valor nulo,
+                            pois nulo é considerado "desconhecido" e não igual a outro nulo).</dd>
+                        <dt><strong>CHECK:</strong></dt>
+                        <dd>Define uma condição que todos os valores em uma coluna devem satisfazer. Ex: Idade maior que
+                            18, ou status ser 'Ativo' ou 'Inativo'.</dd>
+                        <dt><strong>DEFAULT:</strong></dt>
+                        <dd>Atribui um valor padrão a uma coluna se nenhum valor for explicitamente fornecido durante
+                            uma inserção. Não é uma "constraint" no sentido estrito, mas uma cláusula importante para
+                            garantir a integridade e completude dos dados.</dd>
+                    </dl>
+                    <h4>Exemplo de uso de Constraints: ✅</h4>
+                    <pre><code class="language-sql">
+CREATE TABLE Funcionarios (
+    funcionario_id NUMBER PRIMARY KEY,
+    cpf VARCHAR2(11) UNIQUE NOT NULL, -- CPF único e não nulo
+    salario NUMBER(10,2) CHECK (salario >= 1200), -- Salário mínimo
+    data_contratacao DATE DEFAULT SYSDATE -- Data padrão: usa a data e hora atual do sistema
+);
+                    </code></pre>
+                </div>
+            </div>
+
+            <div class="sub-section">
+                <h2>1️⃣2️⃣ Propriedades ACID <i class="fas fa-flask"></i></h2>
+                <p>As propriedades ACID (Atomicidade, Consistência, Isolamento, Durabilidade) são um conjunto de regras
+                    que garantem a validade das transações de banco de dados. Elas são cruciais para a confiabilidade
+                    dos dados.</p>
+                <div class="card">
+                    <dl>
+                        <dt><strong>Atomicidade (Atomicity):</strong></dt>
+                        <dd>Uma transação deve ser executada completamente ou não ser executada de forma alguma. Se
+                            qualquer parte da transação falhar, a transação inteira é revertida (rollback), garantindo
+                            que o banco de dados não fique em um estado inconsistente.</dd>
+                        <dt><strong>Consistência (Consistency):</strong></dt>
+                        <dd>Uma transação leva o banco de dados de um estado válido para outro estado válido. As regras
+                            e restrições definidas no banco de dados (como chaves, validações, etc.) são mantidas antes
+                            e depois da transação.</dd>
+                        <dt><strong>Isolamento (Isolation):</strong></dt>
+                        <dd>Transações concorrentes devem ser executadas de forma isolada, como se estivessem ocorrendo
+                            sequencialmente. Uma transação não deve interferir ou ser afetada por outras transações em
+                            andamento, prevenindo problemas como "leituras sujas".</dd>
+                        <dt><strong>Durabilidade (Durability):</strong></dt>
+                        <dd>Uma vez que uma transação é confirmada (commit), suas mudanças são permanentes e
+                            sobreviverão a falhas do sistema (como queda de energia ou falha de hardware). Os dados são
+                            persistidos de forma segura.</dd>
+                    </dl>
+                    <h4>Exemplo de Transação ACID: 💰 Transferência Bancária</h4>
+                    <p>Imagine uma transferência de R$100 de uma conta A para uma conta B. Esta é uma transação atômica.
+                    </p>
+                    <pre><code class="language-sql">
+-- Início da Transação
+BEGIN
+  -- 1. Diminuir saldo da Conta A
+  UPDATE Contas
+  SET saldo = saldo - 100
+  WHERE conta_id = 'A';
+
+  -- Simula uma falha inesperada AQUI
+  -- RAISE_APPLICATION_ERROR(-20001, 'Erro inesperado!');
+
+  -- 2. Aumentar saldo da Conta B
+  UPDATE Contas
+  SET saldo = saldo + 100
+  WHERE conta_id = 'B';
+
+  COMMIT; -- Confirma ambas as operações, tornando-as duráveis
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK; -- Reverte ambas as operações se algo der errado (Atomicidade)
+    DBMS_OUTPUT.PUT_LINE('Transação revertida devido a erro.');
+END;
+/
+                    </code></pre>
+                    <p>Se a falha ocorrer, o `ROLLBACK` garante que nem a conta A foi debitada nem a B foi creditada,
+                        mantendo a consistência.</p>
+                </div>
+            </div>
+
+            <div class="sub-section">
+                <h2>1️⃣3️⃣ Normalização de Banco de Dados <i class="fas fa-sitemap"></i></h2>
+                <p>Normalização é um processo de organização de dados em um banco de dados para evitar redundância de
+                    dados e melhorar a integridade dos dados. Isso é feito dividindo tabelas grandes em tabelas menores
+                    e mais gerenciáveis e definindo relacionamentos entre elas.</p>
+                <p>É um tópico mais avançado, mas é importante ter uma noção de sua existência desde o início. As Formas
+                    Normais (FNs) são diretrizes que ajudam a alcançar esse objetivo:</p>
+                <div class="card">
+                    <ul>
+                        <li><strong>Primeira Forma Normal (1FN):</strong> Todos os atributos devem ser atômicos
+                            (não-divisíveis) e não deve haver grupos repetidos.</li>
+                        <li><strong>Segunda Forma Normal (2FN):</strong> Deve estar na 1FN e todos os atributos
+                            não-chave devem ser totalmente dependentes da chave primária (e não apenas de uma parte
+                            dela).</li>
+                        <li><strong>Terceira Forma Normal (3FN):</strong> Deve estar na 2FN e não deve haver
+                            dependências transitivas (atributos não-chave que dependem de outros atributos não-chave).
+                        </li>
+                    </ul>
+                    <h4>Exemplo de 1FN: ✂️ Dividindo Colunas</h4>
+                    <p>Tabela Não Normalizada (com múltiplos telefones em uma única coluna):</p>
+                    <pre><code class="language-sql">
+-- Tabela Original (Não em 1FN)
+CREATE TABLE Clientes_Problema (
+    cliente_id NUMBER PRIMARY KEY,
+    nome VARCHAR2(100),
+    telefones VARCHAR2(200) -- Ex: "99123-4567, 98765-4321"
+);
+                    </code></pre>
+                    <p>Para a 1FN, os telefones devem estar em uma tabela separada ou em colunas atômicas:</p>
+                    <pre><code class="language-sql">
+-- Tabela Clientes (em 1FN)
+CREATE TABLE Clientes (
+    cliente_id NUMBER PRIMARY KEY,
+    nome VARCHAR2(100)
+);
+
+-- Tabela Telefones (em 1FN)
+CREATE TABLE Telefones (
+    telefone_id NUMBER PRIMARY KEY,
+    cliente_id NUMBER,
+    numero_telefone VARCHAR2(20),
+    FOREIGN KEY (cliente_id) REFERENCES Clientes(cliente_id)
+);
+                    </code></pre>
+                </div>
+                <p>Dominar a normalização permite projetar bancos de dados eficientes e consistentes.</p>
+            </div>
+
+            <div class="sub-section">
+                <h2>1️⃣4️⃣ Índices (Indexes) <i class="fas fa-sort-numeric-down"></i></h2>
+                <p>Um índice é uma estrutura de banco de dados que melhora a velocidade da recuperação de dados em
+                    tabelas. É como o índice remissivo de um livro, que permite encontrar informações rapidamente sem
+                    ter que ler o livro inteiro.</p>
+                <div class="card">
+                    <p>Ao criar um índice em uma coluna, o SGBD cria e mantém uma estrutura de dados (geralmente uma
+                        árvore B-tree) que armazena os valores da coluna de forma ordenada, juntamente com ponteiros
+                        para as linhas correspondentes na tabela. Isso acelera as operações de `SELECT` que utilizam
+                        essa coluna na cláusula `WHERE`.</p>
+                    <pre><code class="language-sql">
+-- Cria um índice na coluna 'email' da tabela 'Clientes'
+CREATE INDEX idx_clientes_email ON Clientes (email);
+
+-- Benefício: A busca por email será muito mais rápida
+SELECT * FROM Clientes WHERE email = 'joao.silva@email.com';
+                    </code></pre>
+                    <p><span class="highlight-info"><strong>Observação:</strong></span> Chaves Primárias e Restrições
+                        UNIQUE automaticamente criam índices no Oracle para garantir sua unicidade e acesso rápido.</p>
+                </div>
+            </div>
+
+            <div class="sub-section">
+                <h2>1️⃣5️⃣ DROP e TRUNCATE: Removendo Dados e Estruturas <i class="fas fa-trash-alt"></i></h2>
+                <p>É importante entender a diferença entre `DELETE`, `TRUNCATE` e `DROP` ao lidar com a remoção de dados
+                    e objetos no banco de dados.</p>
+                <div class="card">
+                    <dl>
+                        <dt><strong>DELETE (DML):</strong></dt>
+                        <dd>
+                            <p>Remove linhas específicas (ou todas as linhas, se nenhuma condição for especificada) de
+                                uma tabela. É uma operação DML (Data Manipulation Language).</p>
+                            <ul>
+                                <li><strong>É transacional:</strong> Permite `ROLLBACK`.</li>
+                                <li><strong>Lento para grandes volumes:</strong> Remove linha por linha, gerando
+                                    entradas no log de transações.</li>
+                                <li><strong>Mantém a estrutura:</strong> A tabela e suas colunas, índices, constraints
+                                    permanecem.</li>
+                                <li><strong>Pode usar cláusula `WHERE`:</strong> Permite apagar registros seletivamente.
+                                </li>
+                            </ul>
+                            <pre><code class="language-sql">
+-- Apaga registros específicos
+DELETE FROM Produtos WHERE preco < 100;
+
+-- Apaga todos os registros da tabela (mas ainda permite ROLLBACK)
+DELETE FROM Produtos;
+                            </code></pre>
+                        </dd>
+                        <dt><strong>TRUNCATE (DDL):</strong></dt>
+                        <dd>
+                            <p>Remove *todas* as linhas de uma tabela de forma muito rápida. É uma operação DDL (Data
+                                Definition Language).</p>
+                            <ul>
+                                <li><strong>Não é transacional:</strong> **Não permite `ROLLBACK`**. Uma vez executado,
+                                    os dados se foram.</li>
+                                <li><strong>Rápido para grandes volumes:</strong> Desaloca o espaço de armazenamento da
+                                    tabela, sem registrar as exclusões linha por linha.</li>
+                                <li><strong>Mantém a estrutura:</strong> A tabela e suas colunas, índices, constraints
+                                    permanecem. Reseta contadores de `IDENTITY` ou `SEQUENCE` para o valor inicial.</li>
+                            </ul>
+                            <pre><code class="language-sql">
+-- Apaga todos os registros de forma rápida e irreversível
+TRUNCATE TABLE Produtos;
+                            </code></pre>
+                        </dd>
+                        <dt><strong>DROP (DDL):</strong></dt>
+                        <dd>
+                            <p>Remove *completamente* um objeto do banco de dados (tabela, índice, view, sequence,
+                                etc.). É uma operação DDL.</p>
+                            <ul>
+                                <li><strong>Não é transacional:</strong> **Não permite `ROLLBACK`** (geralmente).</li>
+                                <li><strong>Remove a estrutura e os dados:</strong> O objeto é removido do dicionário de
+                                    dados do Oracle.</li>
+                                <li><strong>Cuidado:</strong> Apagar uma tabela com `DROP` significa que ela e todos os
+                                    seus dados se foram.</li>
+                            </ul>
+                            <pre><code class="language-sql">
+-- Apaga a tabela 'Produtos' e todos os seus dados e estrutura
+DROP TABLE Produtos;
+
+-- Apaga um índice
+DROP INDEX idx_clientes_email;
+                            </code></pre>
+                        </dd>
+                    </dl>
+                    <p><span class="highlight-warning"><strong>ATENÇÃO:</strong></span> Use `TRUNCATE` e `DROP` com
+                        extrema cautela em ambientes de produção, pois suas ações são dificilmente reversíveis.</p>
+                </div>
+            </div>
+
+
+            <div class="exercise">
+                <h2>Exercícios e Desafios <i class="fas fa-question-circle"></i></h2>
+                <p>Para solidificar seu aprendizado, tente responder às seguintes perguntas:</p>
+                <div class="card">
+                    <ol class="padding-r-10">
+                        <li>
+                            Qual a diferença essencial entre Dados e Informação? Dê um exemplo.
+                            <button onclick="toggleAnswer('ansEx1')">Mostrar Gabarito</button>
+                            <div class="answer" id="ansEx1">
+                                <p><strong>Dados:</strong> Fatos brutos, sem contexto ou significado por si só. Ex:
+                                    "25", "São Paulo".</p>
+                                <p><strong>Informação:</strong> Dados processados e contextualizados, que adquirem
+                                    significado. Ex: "A temperatura atual é de 25 graus Celsius em São Paulo."</p>
+                            </div>
+                        </li>
+                        <li>
+                            Descreva as três principais componentes de uma tabela de banco de dados relacional.
+                            <button onclick="toggleAnswer('ansEx2')">Mostrar Gabarito</button>
+                            <div class="answer" id="ansEx2">
+                                <p>As três principais componentes são:</p>
+                                <ul>
+                                    <li><strong>Tabela (Relação):</strong> A estrutura que armazena um conjunto de dados
+                                        relacionados sobre uma entidade.</li>
+                                    <li><strong>Coluna (Atributo/Campo):</strong> Uma característica específica da
+                                        entidade, que define o tipo de dado a ser armazenado.</li>
+                                    <li><strong>Registro (Linha/Tupla):</strong> Uma única entrada ou ocorrência da
+                                        entidade, contendo valores para cada coluna.</li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li>
+                            O que é o SQL e quais são as principais categorias de comandos (DQL, DDL, DML)?
+                            <button onclick="toggleAnswer('ansEx3')">Mostrar Gabarito</button>
+                            <div class="answer" id="ansEx3">
+                                <p><strong>SQL (Structured Query Language)</strong> é a linguagem padrão para gerenciar
+                                    e manipular bancos de dados relacionais.</p>
+                                <p>As principais categorias de comandos são:</p>
+                                <ul>
+                                    <li><strong>DQL (Data Query Language):</strong> Usado para consultar dados (ex:
+                                        `SELECT`).</li>
+                                    <li><strong>DDL (Data Definition Language):</strong> Usado para definir ou modificar
+                                        a estrutura do banco de dados (ex: `CREATE TABLE`, `ALTER TABLE`, `DROP TABLE`).
+                                    </li>
+                                    <li><strong>DML (Data Manipulation Language):</strong> Usado para manipular os dados
+                                        dentro das tabelas (ex: `INSERT`, `UPDATE`, `DELETE`).</li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li>
+                            Explique a diferença entre uma Chave Primária e uma restrição `UNIQUE` em uma coluna.
+                            <button onclick="toggleAnswer('ansEx4')">Mostrar Gabarito</button>
+                            <div class="answer" id="ansEx4">
+                                <p>Ambas garantem a unicidade dos valores em uma coluna, mas há diferenças cruciais:</p>
+                                <ul>
+                                    <li><strong>Chave Primária (PRIMARY KEY):</strong> Identifica unicamente cada
+                                        registro na tabela. Não permite valores nulos e só pode haver uma chave primária
+                                        por tabela.</li>
+                                    <li><strong>Restrição UNIQUE:</strong> Garante que todos os valores em uma coluna
+                                        (ou conjunto de colunas) sejam únicos. No entanto, ela permite valores nulos
+                                        (geralmente apenas um valor nulo, pois nulo é considerado "desconhecido" e não
+                                        igual a outro nulo) e uma tabela pode ter várias restrições UNIQUE.</li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li>
+                            Qual a importância das propriedades ACID para a confiabilidade de um banco de dados?
+                            <button onclick="toggleAnswer('ansEx5')">Mostrar Gabarito</button>
+                            <div class="answer" id="ansEx5">
+                                <p>As propriedades ACID (Atomicidade, Consistência, Isolamento, Durabilidade) são
+                                    fundamentais para garantir a **confiabilidade e a integridade** das transações em um
+                                    banco de dados. Elas asseguram que os dados permaneçam corretos e consistentes,
+                                    mesmo diante de falhas de sistema ou operações concorrentes, prevenindo perdas de
+                                    dados e estados inconsistentes.</p>
+                            </div>
+                        </li>
+                        <li>
+                            Para que serve a normalização? Cite e descreva brevemente a Primeira Forma Normal.
+                            <button onclick="toggleAnswer('ansEx6')">Mostrar Gabarito</button>
+                            <div class="answer" id="ansEx6">
+                                <p><strong>Normalização</strong> é o processo de organizar os dados em um banco de dados
+                                    para reduzir a redundância e melhorar a integridade dos dados, dividindo tabelas
+                                    grandes em tabelas menores e relacionadas.</p>
+                                <p>A <strong>Primeira Forma Normal (1FN)</strong> exige que todos os atributos em uma
+                                    tabela sejam atômicos (não-divisíveis) e que não existam grupos repetidos de
+                                    colunas. Ou seja, cada célula da tabela deve conter um único valor e cada coluna
+                                    deve ter um nome único.</p>
+                            </div>
+                        </li>
+                        <li>
+                            Explique a função de um Índice em um banco de dados e cite um exemplo de como ele é criado.
+                            <button onclick="toggleAnswer('ansEx7')">Mostrar Gabarito</button>
+                            <div class="answer" id="ansEx7">
+                                <p>Um <strong>Índice</strong> é uma estrutura que melhora a velocidade de recuperação de
+                                    dados em uma tabela, similar ao índice de um livro. Ele ordena os valores de uma ou
+                                    mais colunas, permitindo que o SGBD encontre os dados mais rapidamente sem precisar
+                                    escanear a tabela inteira.</p>
+                                <pre><code class="language-sql">
+CREATE INDEX idx_produtos_nome ON Produtos (nome);
+                                </code></pre>
+                            </div>
+                        </li>
+                        <li>
+                            Compare os comandos `DELETE`, `TRUNCATE` e `DROP`, explicando suas diferenças e quando usar
+                            cada um.
+                            <button onclick="toggleAnswer('ansEx8')">Mostrar Gabarito</button>
+                            <div class="answer" id="ansEx8">
+                                <p>
+                                <ul>
+                                    <li><strong>DELETE (DML):</strong> Remove linhas de uma tabela (pode usar `WHERE`),
+                                        é transacional (permite `ROLLBACK`), mas é mais lento para grandes volumes.
+                                        Mantém a estrutura da tabela.</li>
+                                    <li><strong>TRUNCATE (DDL):</strong> Remove todas as linhas de uma tabela de forma
+                                        muito rápida, não é transacional (não permite `ROLLBACK`), e reseta contadores
+                                        de `IDENTITY`/`SEQUENCE`. Mantém a estrutura da tabela.</li>
+                                    <li><strong>DROP (DDL):</strong> Remove completamente um objeto do banco de dados
+                                        (tabela, índice, etc.), incluindo sua estrutura e todos os dados. Não é
+                                        transacional. Use com extrema cautela.</li>
+                                </ul>
+                                </p>
+                            </div>
+                        </li>
+                    </ol>
+                </div>
+            </div>
+
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                // Função para carregar o menu
+                function loadMenu() {
+                    fetch('/menu.html') // Certifique-se de que este caminho está correto para o seu ambiente
+                        .then(response => response.text())
+                        .then(data => {
+                            document.getElementById('menu-placeholder').innerHTML = data;
+                            initializeSidebar(); // Inicializa a funcionalidade da sidebar após carregar o menu
+                        })
+                        .catch(error => console.error('Erro ao carregar o menu:', error));
+                }
+
+                function initializeSidebar() {
+                    const hamburgerMenu = document.getElementById('hamburger-menu');
+                    const sidebar = document.getElementById('sidebar');
+                    const content = document.getElementById('content');
+                    const overlay = document.getElementById('overlay');
+                    const sidebarLinks = sidebar.querySelectorAll('a');
+
+                    function toggleSidebar() {
+                        sidebar.classList.toggle('active');
+                        content.classList.toggle('sidebar-active');
+                        overlay.classList.toggle('active');
+                    }
+
+                    hamburgerMenu.addEventListener('click', toggleSidebar);
+                    overlay.addEventListener('click', toggleSidebar);
+
+                    sidebarLinks.forEach(link => {
+                        link.addEventListener('click', function () {
+                            if (sidebar.classList.contains('active')) {
+                                toggleSidebar();
+                            }
+                        });
+                    });
+
+                    function highlightActiveLink() {
+                        const currentPath = window.location.pathname.split('/').pop();
+                        sidebarLinks.forEach(link => {
+                            const linkPath = link.getAttribute('href');
+                            // Adicionamos a lógica para 'Conceitos Fundamentais de Banco de Dados.html'
+                            if (linkPath === currentPath || (currentPath === '' && linkPath === 'index.html')) {
+                                link.classList.add('active');
+                            } else {
+                                link.classList.remove('active');
+                            }
+                        });
+                    }
+
+                    highlightActiveLink();
+                }
+
+                // Carrega o menu quando o DOM estiver pronto
+                loadMenu();
+
+                // Função para mostrar/esconder o gabarito
+                window.toggleAnswer = function (id) {
+                    var x = document.getElementById(id);
+                    if (x.style.display === "none" || x.style.display === "") {
+                        x.style.display = "block";
+                    } else {
+                        x.style.display = "none";
+                    }
+                };
+            });
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+    </div>
+</body>
+
+</html>

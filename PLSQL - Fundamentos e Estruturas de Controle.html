@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PL/SQL - Fundamentos e Estruturas de Controle</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+</head>
+
+<body>
+  <div id="menu-placeholder"></div>
+
+  <div class="content" id="content">
+    <header>
+      <h1>PL/SQL - Fundamentos e Estruturas de Controle</h1>
+      <p>Entenda os blocos PL/SQL, a declaração de variáveis e o uso de estruturas de controle para implementar lógica
+        de programação no Oracle.</p>
+    </header>
+
+    <div class="main-section">
+
+      <div class="sub-section">
+        <h2>1️⃣ Estrutura Básica de um Bloco PL/SQL <i class="fas fa-code"></i></h2>
+        <blockquote>
+          <p>PL/SQL (Procedural Language/SQL) é a extensão procedural da linguagem SQL do Oracle, que combina a
+            flexibilidade do SQL com o poder de uma linguagem de programação procedural.</p>
+        </blockquote>
+        <p>Um bloco PL/SQL é composto por três seções principais (duas delas opcionais):</p>
+        <div class="card">
+          <h3>Sintaxe:</h3>
+          <pre><code class="language-sql">
+[ DECLARE ]
+  -- Declaração de variáveis, constantes, cursores, exceções customizadas
+BEGIN
+  -- Lógica executável (instruções SQL e PL/SQL)
+[ EXCEPTION ]
+  -- Tratamento de erros
+END;
+/ -- Caractere de terminação para o SQL*Plus/SQL Developer
+          </code></pre>
+          <ul>
+            <li><code>DECLARE</code>: Seção opcional para declarar variáveis, constantes, cursores, tipos e exceções.
+            </li>
+            <li><code>BEGIN</code>: Seção obrigatória que contém as instruções executáveis.</li>
+            <li><code>EXCEPTION</code>: Seção opcional para tratar erros (exceções) que ocorrem durante a execução do
+              bloco.</li>
+            <li><code>END;</code>: Marca o fim do bloco PL/SQL.</li>
+            <li><code>/</code>: Símbolo de terminação para que ferramentas como SQL*Plus ou SQL Developer enviem o bloco
+              para o banco de dados.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h2>2️⃣ Declaração de Variáveis e Constantes <i class="fas fa-tags"></i></h2>
+        <p>No PL/SQL, você pode declarar variáveis para armazenar dados temporariamente e constantes para valores fixos.
+        </p>
+        <div class="card">
+          <h3>2.1. Declaração de Variáveis</h3>
+          <p>A sintaxe básica para declarar uma variável é <code>nome_variavel TIPO_DADO [ := valor_inicial ];</code>
+          </p>
+          <ul>
+            <li><code>%TYPE</code>: Usado para declarar uma variável com o mesmo tipo de dado de uma coluna de tabela
+              existente ou de outra variável. Garante que o tipo de dado seja sempre compatível com a coluna.</li>
+            <li><code>%ROWTYPE</code>: Usado para declarar uma variável que pode conter uma linha inteira de uma tabela
+              ou de um cursor, com todas as suas colunas e tipos de dados.</li>
+          </ul>
+          <h4>Exemplo:</h4>
+          <pre><code class="language-sql">
+DECLARE
+  -- Variáveis simples
+  v_nome_aluno    VARCHAR2(100) := 'Maria Silva';
+  v_idade         NUMBER(3)     DEFAULT 20; -- Valor padrão
+  v_salario_total NUMBER(10,2);
+  v_data_atual    DATE := SYSDATE;
+
+  -- Variável baseada em coluna com %TYPE
+  v_nome_produto  Produtos.nome_produto%TYPE;
+  v_preco_produto Produtos.preco%TYPE;
+
+  -- Variável baseada em linha com %ROWTYPE
+  r_dados_funcionario Funcionarios%ROWTYPE; -- Assume uma tabela Funcionarios
+
+  -- Constante
+  c_pi            CONSTANT NUMBER := 3.14159;
+BEGIN
+  -- Atribuição de valores
+  v_salario_total := 1500.75 + 500;
+  
+  -- Recuperando valores de tabela
+  SELECT nome_produto, preco
+  INTO v_nome_produto, v_preco_produto
+  FROM Produtos
+  WHERE produto_id = 1; -- Suponha que produto_id = 1 exista
+
+  DBMS_OUTPUT.PUT_LINE('Nome do Produto: ' || v_nome_produto || ', Preço: ' || v_preco_produto);
+
+  -- Exemplo de uso de %ROWTYPE (requer dados na tabela Funcionarios)
+  SELECT *
+  INTO r_dados_funcionario
+  FROM Funcionarios
+  WHERE funcionario_id = 10; -- Suponha que funcionario_id = 10 exista
+
+  DBMS_OUTPUT.PUT_LINE('Funcionário: ' || r_dados_funcionario.nome || ', Salário: ' || r_dados_funcionario.salario);
+
+  DBMS_OUTPUT.PUT_LINE('O valor de PI é: ' || c_pi);
+END;
+/
+          </code></pre>
+          <p>Para visualizar a saída de <code>DBMS_OUTPUT.PUT_LINE</code>, você precisa ativar o servidor de saída no
+            SQL*Plus ou SQL Developer:</p>
+          <pre><code class="language-sql">
+SET SERVEROUTPUT ON;
+          </code></pre>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h2>3️⃣ Estruturas de Controle <i class="fas fa-sitemap"></i></h2>
+        <p>PL/SQL oferece estruturas para controlar o fluxo de execução do código.</p>
+        <div class="card">
+          <h3>3.1. Estruturas Condicionais (IF)</h3>
+          <p>Permitem a execução de blocos de código com base em condições.</p>
+          <h4>Sintaxe: IF-THEN-END IF</h4>
+          <pre><code class="language-sql">
+IF condição THEN
+  -- instruções
+END IF;
+          </code></pre>
+          <h4>Sintaxe: IF-THEN-ELSE-END IF</h4>
+          <pre><code class="language-sql">
+IF condição THEN
+  -- instruções se verdadeiro
+ELSE
+  -- instruções se falso
+END IF;
+          </code></pre>
+          <h4>Sintaxe: IF-THEN-ELSIF-ELSE-END IF</h4>
+          <pre><code class="language-sql">
+IF condição1 THEN
+  -- instruções se condição1 verdadeiro
+ELSIF condição2 THEN
+  -- instruções se condição2 verdadeiro
+ELSIF condição3 THEN
+  -- instruções se condição3 verdadeiro
+ELSE
+  -- instruções se nenhuma das condições for verdadeira
+END IF;
+          </code></pre>
+          <h4>Exemplo: Avaliação de Nota</h4>
+          <pre><code class="language-sql">
+DECLARE
+  v_nota NUMBER := 75;
+  v_status VARCHAR2(20);
+BEGIN
+  IF v_nota >= 70 THEN
+    v_status := 'Aprovado';
+  ELSIF v_nota >= 50 THEN
+    v_status := 'Recuperação';
+  ELSE
+    v_status := 'Reprovado';
+  END IF;
+  DBMS_OUTPUT.PUT_LINE('O aluno está: ' || v_status);
+END;
+/
+          </code></pre>
+
+          <h3>3.2. Estruturas de Repetição (Loops)</h3>
+          <p>Permitem a execução repetida de um bloco de código.</p>
+          <h4>3.2.1. LOOP Básico</h4>
+          <p>Executa um bloco de código repetidamente até que uma condição <code>EXIT</code> seja satisfeita.</p>
+          <h4>Sintaxe:</h4>
+          <pre><code class="language-sql">
+LOOP
+  -- instruções
+  EXIT WHEN condição_de_saída;
+END LOOP;
+          </code></pre>
+          <h4>Exemplo: Contagem Simples</h4>
+          <pre><code class="language-sql">
+DECLARE
+  v_contador NUMBER := 1;
+BEGIN
+  LOOP
+    DBMS_OUTPUT.PUT_LINE('Contador: ' || v_contador);
+    v_contador := v_contador + 1;
+    EXIT WHEN v_contador > 5;
+  END LOOP;
+END;
+/
+          </code></pre>
+
+          <h4>3.2.2. WHILE LOOP</h4>
+          <p>Executa um bloco de código enquanto uma condição for verdadeira. A condição é avaliada no início de cada
+            iteração.</p>
+          <h4>Sintaxe:</h4>
+          <pre><code class="language-sql">
+WHILE condição LOOP
+  -- instruções
+END LOOP;
+          </code></pre>
+          <h4>Exemplo: Saldo Decrescente</h4>
+          <pre><code class="language-sql">
+DECLARE
+  v_saldo NUMBER := 50;
+BEGIN
+  WHILE v_saldo > 0 LOOP
+    DBMS_OUTPUT.PUT_LINE('Saldo atual: ' || v_saldo);
+    v_saldo := v_saldo - 10;
+  END LOOP;
+  DBMS_OUTPUT.PUT_LINE('Saldo final: ' || v_saldo);
+END;
+/
+          </code></pre>
+
+          <h4>3.2.3. FOR LOOP (Numérico)</h4>
+          <p>Ideal para iterar um número predefinido de vezes. O contador é automaticamente incrementado/decrementado e
+            não precisa ser declarado.</p>
+          <h4>Sintaxe:</h4>
+          <pre><code class="language-sql">
+FOR contador IN [REVERSE] valor_inicial .. valor_final LOOP
+  -- instruções
+END LOOP;
+          </code></pre>
+          <h4>Exemplo: Tabuada</h4>
+          <pre><code class="language-sql">
+BEGIN
+  FOR i IN 1 .. 5 LOOP
+    DBMS_OUTPUT.PUT_LINE('2 x ' || i || ' = ' || (2 * i));
+  END LOOP;
+
+  -- Exemplo com REVERSE
+  DBMS_OUTPUT.PUT_LINE('--- Contagem regressiva ---');
+  FOR j IN REVERSE 1 .. 3 LOOP
+    DBMS_OUTPUT.PUT_LINE('Número: ' || j);
+  END LOOP;
+END;
+/
+          </code></pre>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h2>4️⃣ Cursores em PL/SQL <i class="fas fa-list-alt"></i></h2>
+        <p>Um cursor é um ponteiro para a área de contexto da memória, onde o Oracle armazena informações sobre uma
+          instrução SQL. Permite processar um conjunto de linhas retornadas por uma consulta, uma linha por vez.</p>
+        <div class="card">
+          <h3>4.1. Cursores Implícitos</h3>
+          <p>O Oracle gerencia automaticamente cursores implícitos para instruções <code>SELECT INTO</code>,
+            <code>INSERT</code>, <code>UPDATE</code> e <code>DELETE</code>. Você não precisa declará-los.
+          </p>
+          <h4>Atributos Comuns:</h4>
+          <ul>
+            <li><code>SQL%ROWCOUNT</code>: Número de linhas afetadas.</li>
+            <li><code>SQL%FOUND</code>: Retorna TRUE se uma linha foi afetada.</li>
+            <li><code>SQL%NOTFOUND</code>: Retorna TRUE se nenhuma linha foi afetada.</li>
+            <li><code>SQL%ISOPEN</code>: Sempre FALSE para cursores implícitos após a execução.</li>
+          </ul>
+          <h4>Exemplo: Atualização Implícita</h4>
+          <pre><code class="language-sql">
+DECLARE
+  v_id_aluno NUMBER := 1;
+  v_novo_email VARCHAR2(100) := 'novo.email@exemplo.com';
+BEGIN
+  -- Assumindo uma tabela Alunos com id e email
+  -- CREATE TABLE Alunos (id NUMBER PRIMARY KEY, nome VARCHAR2(100), email VARCHAR2(100));
+  -- INSERT INTO Alunos VALUES (1, 'Fernando', 'fer@example.com');
+  -- INSERT INTO Alunos VALUES (2, 'Gabriela', 'gab@example.com');
+  -- COMMIT;
+
+  UPDATE Alunos
+  SET email = v_novo_email
+  WHERE id = v_id_aluno;
+
+  IF SQL%FOUND THEN
+    DBMS_OUTPUT.PUT_LINE('Email do aluno ' || v_id_aluno || ' atualizado para: ' || v_novo_email);
+  ELSE
+    DBMS_OUTPUT.PUT_LINE('Aluno ' || v_id_aluno || ' não encontrado.');
+  END IF;
+
+  DBMS_OUTPUT.PUT_LINE('Total de linhas afetadas: ' || SQL%ROWCOUNT);
+  COMMIT;
+END;
+/
+          </code></pre>
+
+          <h3>4.2. Cursores Explícitos</h3>
+          <p>Declarados e controlados manualmente pelo programador. Usados para consultas que retornam múltiplas linhas.
+          </p>
+          <h4>Passos:</h4>
+          <ol>
+            <li><strong>DECLARAR:</strong> Define o cursor associado a uma instrução <code>SELECT</code>.</li>
+            <li><strong>OPEN:</strong> Abre o cursor e executa a consulta, populando a área de contexto.</li>
+            <li><strong>FETCH:</strong> Recupera uma linha por vez do cursor para variáveis PL/SQL.</li>
+            <li><strong>CLOSE:</strong> Libera os recursos alocados pelo cursor.</li>
+          </ol>
+          <h4>Exemplo: Listando Produtos com Cursor Explícito</h4>
+          <pre><code class="language-sql">
+DECLARE
+  -- Supondo uma tabela Produtos com produto_id, nome_produto, preco
+  -- DECLARE
+  -- CREATE TABLE Produtos (produto_id NUMBER PRIMARY KEY, nome_produto VARCHAR2(100), preco NUMBER(10,2));
+  -- INSERT INTO Produtos VALUES (1, 'Monitor 27"', 1200.00);
+  -- INSERT INTO Produtos VALUES (2, 'Mouse Gamer', 180.00);
+  -- INSERT INTO Produtos VALUES (3, 'Webcam HD', 250.00);
+  -- COMMIT;
+
+  CURSOR c_produtos IS
+    SELECT produto_id, nome_produto, preco
+    FROM Produtos
+    WHERE preco > 100
+    ORDER BY nome_produto;
+
+  v_produto_id    Produtos.produto_id%TYPE;
+  v_nome_produto  Produtos.nome_produto%TYPE;
+  v_preco         Produtos.preco%TYPE;
+BEGIN
+  OPEN c_produtos;
+  LOOP
+    FETCH c_produtos INTO v_produto_id, v_nome_produto, v_preco;
+    EXIT WHEN c_produtos%NOTFOUND; -- Sai do loop quando não há mais linhas
+    DBMS_OUTPUT.PUT_LINE('Produto ID: ' || v_produto_id || ', Nome: ' || v_nome_produto || ', Preço: ' || v_preco);
+  END LOOP;
+  CLOSE c_produtos;
+END;
+/
+          </code></pre>
+
+          <h3>4.3. FOR LOOP com Cursor (Melhor Prática)</h3>
+          <p>Uma forma mais simples, robusta e eficiente de usar cursores explícitos. O Oracle gerencia automaticamente
+            a abertura, fetch e fechamento do cursor.</p>
+          <h4>Exemplo: Listando Funcionários Ativos</h4>
+          <pre><code class="language-sql">
+-- Assumindo uma tabela Funcionarios com nome, salario, status_matricula
+-- CREATE TABLE Funcionarios (id NUMBER PRIMARY KEY, nome VARCHAR2(100), salario NUMBER(10,2), status_matricula VARCHAR2(20));
+-- INSERT INTO Funcionarios VALUES (101, 'João da Silva', 7000.00, 'Ativo');
+-- INSERT INTO Funcionarios VALUES (102, 'Ana Paula', 6000.00, 'Ativo');
+-- INSERT INTO Funcionarios VALUES (103, 'Pedro Costa', 4500.00, 'Inativo');
+-- COMMIT;
+
+BEGIN
+  DBMS_OUTPUT.PUT_LINE('--- Funcionários Ativos ---');
+  FOR r_func IN (SELECT nome, salario FROM Funcionarios WHERE status_matricula = 'Ativo') LOOP
+    DBMS_OUTPUT.PUT_LINE('Nome: ' || r_func.nome || ', Salário: ' || r_func.salario);
+  END LOOP;
+  DBMS_OUTPUT.PUT_LINE('--- Fim da Lista ---');
+END;
+/
+          </code></pre>
+          <p>O `FOR LOOP` com cursor é a abordagem recomendada para processar múltiplos registros, pois é conciso e
+            menos propenso a erros de manipulação do cursor.</p>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <h2>Exercícios e Desafios <i class="fas fa-question-circle"></i></h2>
+        <p>Para solidificar seu aprendizado, tente resolver os seguintes desafios:</p>
+        <div class="card">
+          <ol class="padding-r-10">
+            <li>
+              Crie um bloco PL/SQL que declare uma variável <code>v_numero NUMBER := 10;</code>. Usando uma estrutura
+              <code>IF-ELSIF-ELSE</code>, verifique se o número é par ou ímpar, e se é maior que 50. Imprima a mensagem
+              correspondente usando <code>DBMS_OUTPUT.PUT_LINE</code>.
+              <button onclick="toggleAnswer('ansEx1')">Mostrar Gabarito</button>
+              <div class="answer" id="ansEx1">
+                <pre><code class="language-sql">
+DECLARE
+  v_numero NUMBER := 10; -- Mude este valor para testar diferentes casos
+BEGIN
+  IF MOD(v_numero, 2) = 0 THEN
+    -- É par
+    IF v_numero > 50 THEN
+      DBMS_OUTPUT.PUT_LINE(v_numero || ' é par e maior que 50.');
+    ELSE
+      DBMS_OUTPUT.PUT_LINE(v_numero || ' é par e menor ou igual a 50.');
+    END IF;
+  ELSE
+    -- É ímpar
+    IF v_numero > 50 THEN
+      DBMS_OUTPUT.PUT_LINE(v_numero || ' é ímpar e maior que 50.');
+    ELSE
+      DBMS_OUTPUT.PUT_LINE(v_numero || ' é ímpar e menor ou igual a 50.');
+    END IF;
+  END IF;
+END;
+/
+                </code></pre>
+              </div>
+            </li>
+            <li>
+              Escreva um bloco PL/SQL que utilize um <code>WHILE LOOP</code> para calcular a soma dos números de 1 até
+              <code>v_limite</code> (ex: 5). Imprima a soma final.
+              <button onclick="toggleAnswer('ansEx2')">Mostrar Gabarito</button>
+              <div class="answer" id="ansEx2">
+                <pre><code class="language-sql">
+DECLARE
+  v_limite NUMBER := 5;
+  v_contador NUMBER := 1;
+  v_soma     NUMBER := 0;
+BEGIN
+  WHILE v_contador <= v_limite LOOP
+    v_soma := v_soma + v_contador;
+    v_contador := v_contador + 1;
+  END LOOP;
+  DBMS_OUTPUT.PUT_LINE('A soma dos números de 1 a ' || v_limite || ' é: ' || v_soma);
+END;
+/
+                </code></pre>
+              </div>
+            </li>
+            <li>
+              Crie uma tabela de exemplo
+              <code>Clientes_Enderecos (cliente_id NUMBER, rua VARCHAR2(100), cidade VARCHAR2(50))</code>. Insira alguns
+              dados. Em seguida, use um <code>FOR LOOP</code> com cursor para listar todos os clientes de uma cidade
+              específica (ex: 'São Paulo'), imprimindo o ID, rua e cidade de cada um.
+              <button onclick="toggleAnswer('ansEx3')">Mostrar Gabarito</button>
+              <div class="answer" id="ansEx3">
+                <pre><code class="language-sql">
+-- Criar e popular a tabela de exemplo
+CREATE TABLE Clientes_Enderecos (
+    cliente_id NUMBER PRIMARY KEY,
+    rua VARCHAR2(100),
+    cidade VARCHAR2(50)
+);
+
+INSERT INTO Clientes_Enderecos VALUES (1, 'Rua A, 123', 'São Paulo');
+INSERT INTO Clientes_Enderecos VALUES (2, 'Av. B, 45', 'Rio de Janeiro');
+INSERT INTO Clientes_Enderecos VALUES (3, 'Rua C, 78', 'São Paulo');
+INSERT INTO Clientes_Enderecos VALUES (4, 'Travessa D, 90', 'Belo Horizonte');
+COMMIT;
+
+BEGIN
+  DBMS_OUTPUT.PUT_LINE('--- Clientes de São Paulo ---');
+  FOR r_cliente IN (SELECT cliente_id, rua, cidade FROM Clientes_Enderecos WHERE cidade = 'São Paulo') LOOP
+    DBMS_OUTPUT.PUT_LINE('ID: ' || r_cliente.cliente_id || ', Rua: ' || r_cliente.rua || ', Cidade: ' || r_cliente.cidade);
+  END LOOP;
+  DBMS_OUTPUT.PUT_LINE('--- Fim da Lista ---');
+END;
+/
+                </code></pre>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Function to load the menu
+      function loadMenu() {
+        fetch('/menu.html')
+          .then(response => response.text())
+          .then(data => {
+            document.getElementById('menu-placeholder').innerHTML = data;
+            initializeSidebar(); // Initialize sidebar functionality after loading menu
+          })
+          .catch(error => console.error('Error loading menu:', error));
+      }
+
+      function initializeSidebar() {
+        const hamburgerMenu = document.getElementById('hamburger-menu');
+        const sidebar = document.getElementById('sidebar');
+        const content = document.getElementById('content');
+        const overlay = document.getElementById('overlay');
+        const sidebarLinks = sidebar.querySelectorAll('a');
+
+        function toggleSidebar() {
+          sidebar.classList.toggle('active');
+          content.classList.toggle('sidebar-active');
+          overlay.classList.toggle('active');
+        }
+
+        hamburgerMenu.addEventListener('click', toggleSidebar);
+        overlay.addEventListener('click', toggleSidebar);
+
+        sidebarLinks.forEach(link => {
+          link.addEventListener('click', function () {
+            if (sidebar.classList.contains('active')) {
+              toggleSidebar();
+            }
+          });
+        });
+
+        function highlightActiveLink() {
+          const currentPath = window.location.pathname.split('/').pop();
+          sidebarLinks.forEach(link => {
+            const linkPath = link.getAttribute('href');
+            if (linkPath === currentPath || (currentPath === '' && linkPath === 'index.html')) {
+              link.classList.add('active');
+            } else {
+              link.classList.remove('active');
+            }
+          });
+        }
+
+        highlightActiveLink();
+      }
+
+      // Load the menu when the DOM is ready
+      loadMenu();
+
+      window.toggleAnswer = function (id) {
+        var x = document.getElementById(id);
+        if (x.style.display === "none" || x.style.display === "") {
+          x.style.display = "block";
+        } else {
+          x.style.display = "none";
+        }
+      };
+    });
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+</body>
+
+</html>

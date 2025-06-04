@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL - Agregação e Subconsultas</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+        /* Adicionando padding aos blocos de código para melhor visualização */
+        pre[class*="language-"] {
+            padding: 1em;
+            margin: .5em 0;
+            overflow: auto;
+            border-radius: 0.3em;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="menu-placeholder"></div>
+
+    <div class="content" id="content">
+        <header>
+            <h1>SQL - Agregação e Subconsultas (Oracle)</h1>
+            <p>Explore as poderosas funções de agregação para resumir dados e o uso estratégico de subconsultas para
+                construir consultas complexas e dinâmicas.</p>
+        </header>
+
+        <div class="main-section">
+
+            <div class="sub-section">
+                <h2>0️⃣ Configuração Inicial: Criação das Tabelas e Inserção de Dados <i class="fas fa-database"></i>
+                </h2>
+                <p>Para praticar as funções de agregação e subconsultas, vamos configurar as tabelas:
+                    `ALUNOS`, `PROFESSORES`, `TURMAS` e `NOTAS`.</p>
+
+                <div class="card">
+                    <h4>Criação e População das Tabelas</h4>
+                    <pre><code class="language-sql">
+-- Remover tabelas antigas se existirem (a ordem importa devido às chaves estrangeiras)
+DROP TABLE NOTAS CASCADE CONSTRAINTS;
+DROP TABLE TURMAS CASCADE CONSTRAINTS;
+DROP TABLE PROFESSORES CASCADE CONSTRAINTS;
+DROP TABLE ALUNOS CASCADE CONSTRAINTS;
+
+
+-- Tabela ALUNOS
+CREATE TABLE ALUNOS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    NOME VARCHAR2(255) NOT NULL,
+    DATA_NASCIMENTO DATE NOT NULL,
+    TELEFONE VARCHAR2(20) DEFAULT 'Não informado',
+    SEXO VARCHAR2(1),
+    EMAIL VARCHAR2(255),
+    DATA_MATRIICULA DATE NOT NULL,
+    STATUS_MATRICULA VARCHAR2(20) CHECK (STATUS_MATRICULA IN ('Ativo', 'Transferido', 'Trancado'))
+);
+
+-- Tabela PROFESSORES
+CREATE TABLE PROFESSORES (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    NOME VARCHAR2(150) NOT NULL,
+    ESPECIALIDADE VARCHAR2(100) NOT NULL,
+    DT_ADIMISSAO DATE NOT NULL,
+    TELEFONE VARCHAR2(20),
+    EMAIL VARCHAR2(150),
+    SALARIO NUMBER(10,2) NOT NULL
+);
+
+-- Tabela TURMAS
+CREATE TABLE TURMAS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    ANO_LETIVO NUMBER(4) NOT NULL,
+    SERIE VARCHAR2(20) NOT NULL,
+    TURNO VARCHAR2(1) CHECK (TURNO IN('M','T','N')),
+    PROFESSOR_ID NUMBER,
+    NUMERO_ALUNOS NUMBER(3) CHECK (NUMERO_ALUNOS >= 2),
+    CONSTRAINT FK_PROFESSOR FOREIGN KEY (PROFESSOR_ID) REFERENCES PROFESSORES (ID)
+);
+
+-- Tabela NOTAS
+CREATE TABLE NOTAS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    ALUNO_ID NUMBER,
+    TURMA_ID NUMBER,
+    MATERIA VARCHAR2(100) NOT NULL,
+    NOTA_1  NUMBER(5,2),
+    NOTA_2  NUMBER(5,2),
+    NOTA_3  NUMBER(5,2),
+    NOTA_4  NUMBER(5,2),
+    MEDIA_FINAL NUMBER(5,2),
+    CONSTRAINT fk_aluno  FOREIGN KEY (aluno_id)
+        REFERENCES Alunos(id),
+    CONSTRAINT fk_turma
+        FOREIGN KEY (turma_id)
+        REFERENCES Turmas(id)
+);
+
+-- Inserção de dados na tabela ALUNOS
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, TELEFONE, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('João Silva', TO_DATE('2005-03-15', 'YYYY-MM-DD'), '99999-1234', 'M', 'joao.silva@email.com', TO_DATE('2020-02-10', 'YYYY-MM-DD'), 'Ativo');
+
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, TELEFONE, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('Maria Oliveira', TO_DATE('2004-07-21', 'YYYY-MM-DD'), '99999-5678', 'F', 'maria.oliveira@email.com', TO_DATE('2019-03-01', 'YYYY-MM-DD'), 'Transferido');
+
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, TELEFONE, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('Lucas Pereira', TO_DATE('2006-12-10', 'YYYY-MM-DD'), '99999-9876', 'M', 'lucas.pereira@email.com', TO_DATE('2021-03-15', 'YYYY-MM-DD'), 'Ativo');
+
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, TELEFONE, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('Ana Souza', TO_DATE('2005-01-20', 'YYYY-MM-DD'), '99999-1111', 'F', 'ana.souza@email.com', TO_DATE('2020-08-01', 'YYYY-MM-DD'), 'Ativo');
+
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, TELEFONE, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('Pedro Santos', TO_DATE('2007-09-05', 'YYYY-MM-DD'), '99999-2222', 'M', 'pedro.santos@email.com', TO_DATE('2022-01-20', 'YYYY-MM-DD'), 'Ativo');
+
+
+-- Inserção de dados na tabela PROFESSORES
+INSERT INTO PROFESSORES (NOME, ESPECIALIDADE, DT_ADIMISSAO, TELEFONE, EMAIL, SALARIO)
+VALUES ('Carlos Souza', 'Matemática', TO_DATE('2015-02-25', 'YYYY-MM-DD'), '99999-1234', 'carlos.souza@email.com', 3500.00);
+
+INSERT INTO PROFESSORES (NOME, ESPECIALIDADE, DT_ADIMISSAO, TELEFONE, EMAIL, SALARIO)
+VALUES ('Ana Costa', 'Português', TO_DATE('2017-06-10', 'YYYY-MM-DD'), '99999-5678', 'ana.costa@email.com', 3000.00);
+
+INSERT INTO PROFESSORES (NOME, ESPECIALIDADE, DT_ADIMISSAO, TELEFONE, EMAIL, SALARIO)
+VALUES ('Ricardo Almeida', 'História', TO_DATE('2019-09-15', 'YYYY-MM-DD'), '99999-2468', 'ricardo.almeida@email.com', 2800.00);
+
+INSERT INTO PROFESSORES (NOME, ESPECIALIDADE, DT_ADIMISSAO, TELEFONE, EMAIL, SALARIO)
+VALUES ('Mariana Lima', 'Ciências', TO_DATE('2018-03-01', 'YYYY-MM-DD'), '99999-3333', 'mariana.lima@email.com', 3200.00);
+
+
+-- Inserção de dados na tabela TURMAS
+INSERT INTO TURMAS (ANO_LETIVO, SERIE, TURNO, PROFESSOR_ID, NUMERO_ALUNOS)
+VALUES (2025, '1º Ano', 'M', 1, 25); -- Professor Carlos Souza (Matemática)
+
+INSERT INTO TURMAS (ANO_LETIVO, SERIE, TURNO, PROFESSOR_ID, NUMERO_ALUNOS)
+VALUES (2025, '2º Ano', 'T', 2, 30); -- Professor Ana Costa (Português)
+
+INSERT INTO TURMAS (ANO_LETIVO, SERIE, TURNO, PROFESSOR_ID, NUMERO_ALUNOS)
+VALUES (2025, '3º Ano', 'N', 3, 28); -- Professor Ricardo Almeida (História)
+
+INSERT INTO TURMAS (ANO_LETIVO, SERIE, TURNO, PROFESSOR_ID, NUMERO_ALUNOS)
+VALUES (2025, '1º Ano', 'T', 4, 22); -- Professor Mariana Lima (Ciências)
+
+INSERT INTO TURMAS (ANO_LETIVO, SERIE, TURNO, PROFESSOR_ID, NUMERO_ALUNOS)
+VALUES (2025, '2º Ano', 'M', 1, 27); -- Professor Carlos Souza (Matemática)
+
+
+-- Inserção de dados na tabela NOTAS
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, MATERIA, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (1, 1, 'Matemática', 8.5, 7.2, 9.0, 6.8, 7.87); -- João Silva, Turma 1
+
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, MATERIA, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (2, 2, 'Português', 9.0, 8.5, 7.8, 8.2, 8.37); -- Maria Oliveira, Turma 2
+
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, MATERIA, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (3, 3, 'História', 7.5, 8.0, 7.2, 6.5, 7.30); -- Lucas Pereira, Turma 3
+
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, MATERIA, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (4, 1, 'Matemática', 7.0, 6.5, 8.0, 7.5, 7.25); -- Ana Souza, Turma 1
+
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, MATERIA, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (5, 2, 'Português', 6.0, 7.0, 6.5, 7.2, 6.67); -- Pedro Santos, Turma 2
+
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, MATERIA, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (1, 1, 'Ciências', 9.2, 8.8, 9.5, 9.0, 9.12); -- João Silva, Turma 1 (outra matéria)
+
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, MATERIA, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (3, 3, 'Matemática', 6.0, 5.5, 7.0, 6.5, 6.25); -- Lucas Pereira, Turma 3 (outra matéria)
+
+-- Exemplos de DDL/DML adicionais
+-- Adicionar uma coluna (já adicionada na criação da tabela ALUNOS, mas para exemplo)
+-- ALTER TABLE ALUNOS ADD TELEFONE VARCHAR2(20) DEFAULT 'Não informado';
+
+-- Atualizar um registro
+UPDATE ALUNOS
+SET TELEFONE = '81 99999-9999'
+WHERE Upper(NOME) = 'JOÃO SILVA';
+
+-- Consultar todos os alunos
+SELECT * FROM ALUNOS;
+
+-- Truncar uma tabela (remove todos os dados, mas mantém a estrutura)
+-- TRUNCATE TABLE ALUNOS;
+
+-- Dropar uma tabela (remove a tabela e seus dados)
+-- DROP TABLE ALUNOS;
+
+-- Dropar tabelas com CASCADE CONSTRAINTS (remove chaves estrangeiras dependentes)
+-- DROP TABLE ALUNOS CASCADE CONSTRAINTS;
+-- DROP TABLE PROFESSORES CASCADE CONSTRAINTS;
+-- DROP TABLE TURMAS CASCADE CONSTRAINTS;
+-- DROP TABLE NOTAS CASCADE CONSTRAINTS;
+                    </code></pre>
+                </div>
+            </div>
+
+            <div class="sub-section">
+                <h2>1️⃣ Funções de Agregação (Funções de Grupo) <i class="fas fa-calculator"></i></h2>
+                <p>As funções de agregação, também conhecidas como funções de grupo, operam sobre conjuntos de linhas
+                    para retornar um único valor de resumo. Elas são frequentemente usadas com a cláusula `GROUP BY`
+                    para resumir dados por categorias.</p>
+
+                <h3>1.1. Funções Essenciais <i class="fas fa-list-ul"></i></h3>
+
+                <div class="card">
+                    <h5>a) <code>COUNT()</code>: Contar Linhas</h5>
+                    <p>Retorna o número de linhas que correspondem a uma condição especificada. Pode contar todas as
+                        linhas (`*`), linhas não nulas em uma coluna específica, ou linhas distintas.</p>
+                    <pre><code class="language-sql">
+-- Contar o número total de alunos
+SELECT COUNT(*) AS total_alunos
+FROM ALUNOS;
+
+-- Contar o número de professores
+SELECT COUNT(ID) AS total_professores
+FROM PROFESSORES;
+
+-- Contar o número de matérias distintas nas notas
+SELECT COUNT(DISTINCT MATERIA) AS total_materias_distintas
+FROM NOTAS;
+                    </code></pre>
+
+                    <h5>b) <code>SUM()</code>: Somar Valores</h5>
+                    <p>Calcula a soma de todos os valores em uma coluna numérica.</p>
+                    <pre><code class="language-sql">
+-- Calcular a soma total dos salários dos professores
+SELECT SUM(SALARIO) AS soma_total_salarios
+FROM PROFESSORES;
+
+-- Calcular a soma total da Nota 1 de todas as notas registradas
+SELECT SUM(NOTA_1) AS soma_total_nota1
+FROM NOTAS;
+                    </code></pre>
+
+                    <h5>c) <code>AVG()</code>: Média de Valores</h5>
+                    <p>Calcula a média (valor aritmético) de todos os valores em uma coluna numérica.</p>
+                    <pre><code class="language-sql">
+-- Calcular o salário médio dos professores
+SELECT AVG(SALARIO) AS salario_medio_professores
+FROM PROFESSORES;
+
+-- Calcular a média final das notas
+SELECT AVG(MEDIA_FINAL) AS media_geral_notas
+FROM NOTAS;
+                    </code></pre>
+
+                    <h5>d) <code>MIN()</code>: Valor Mínimo</h5>
+                    <p>Retorna o menor valor em uma coluna. Pode ser usado com tipos de dados numéricos, de data e
+                        texto.</p>
+                    <pre><code class="language-sql">
+-- Encontrar a menor nota final
+SELECT MIN(MEDIA_FINAL) AS menor_media_final
+FROM NOTAS;
+
+-- Encontrar a data de matrícula mais antiga de um aluno
+SELECT MIN(DATA_MATRIICULA) AS primeira_matricula
+FROM ALUNOS;
+
+-- Encontrar o professor com o menor salário
+SELECT MIN(SALARIO) AS menor_salario_professor
+FROM PROFESSORES;
+                    </code></pre>
+
+                    <h5>e) <code>MAX()</code>: Valor Máximo</h5>
+                    <p>Retorna o maior valor em uma coluna. Pode ser usado com tipos de dados numéricos, de data e
+                        texto.</p>
+                    <pre><code class="language-sql">
+-- Encontrar a maior nota final
+SELECT MAX(MEDIA_FINAL) AS maior_media_final
+FROM NOTAS;
+
+-- Encontrar a data de admissão mais recente de um professor
+SELECT MAX(DT_ADIMISSAO) AS ultima_admissao_professor
+FROM PROFESSORES;
+
+-- Encontrar o professor com o maior salário
+SELECT NOME, SALARIO
+FROM PROFESSORES
+WHERE SALARIO = (SELECT MAX(SALARIO) FROM PROFESSORES);
+                    </code></pre>
+                </div>
+
+                <h3>1.2. Múltiplas Agregações e <code>GROUP BY</code> <i class="fas fa-layer-group"></i></h3>
+                <p>A cláusula `GROUP BY` é utilizada para agrupar linhas que têm os mesmos valores em colunas
+                    especificadas em um ou mais grupos, permitindo que as funções de agregação operem em cada grupo
+                    separadamente.</p>
+
+                <div class="card">
+                    <h4>Cenário: Análise de Dados por Categoria</h4>
+                    <pre><code class="language-sql">
+-- Calcular o número total de alunos por STATUS_MATRICULA
+SELECT
+    STATUS_MATRICULA,
+    COUNT(*) AS total_alunos_status
+FROM ALUNOS
+GROUP BY STATUS_MATRICULA;
+
+-- Calcular o número total de professores, soma de salários e salário médio POR ESPECIALIDADE
+SELECT
+    ESPECIALIDADE,
+    COUNT(ID) AS total_professores_especialidade,
+    SUM(SALARIO) AS soma_salarios_especialidade,
+    AVG(SALARIO) AS salario_medio_especialidade
+FROM PROFESSORES
+GROUP BY ESPECIALIDADE
+ORDER BY ESPECIALIDADE;
+
+-- Média final das notas e número de notas registradas POR MATERIA
+SELECT
+    MATERIA,
+    AVG(MEDIA_FINAL) AS media_final_materia,
+    COUNT(ID) AS total_notas_materia
+FROM NOTAS
+GROUP BY MATERIA
+ORDER BY MATERIA;
+
+-- Número de alunos por TURMA e TURNO
+SELECT
+    ANO_LETIVO,
+    SERIE,
+    TURNO,
+    SUM(NUMERO_ALUNOS) AS total_alunos_turma_turno -- NUMERO_ALUNOS já é uma contagem por turma
+FROM TURMAS
+GROUP BY ANO_LETIVO, SERIE, TURNO
+ORDER BY ANO_LETIVO, SERIE, TURNO;
+                    </code></pre>
+                </div>
+
+                <h3>1.3. Filtrando Grupos com <code>HAVING</code> <i class="fas fa-filter"></i></h3>
+                <p>A cláusula `HAVING` é usada para filtrar grupos criados pela cláusula `GROUP BY`. Diferente de
+                    `WHERE` (que filtra linhas individuais), `HAVING` filtra os resultados das funções de agregação.</p>
+
+                <div class="card">
+                    <h4>Cenário: Grupos com Condições Específicas</h4>
+                    <pre><code class="language-sql">
+-- Encontrar especialidades de professores onde o salário médio é superior a 3000
+SELECT
+    ESPECIALIDADE,
+    AVG(SALARIO) AS salario_medio
+FROM PROFESSORES
+GROUP BY ESPECIALIDADE
+HAVING AVG(SALARIO) > 3000;
+
+-- Matérias que tiveram mais de 10 notas registradas (exemplo, ajuste o valor se necessário)
+SELECT
+    MATERIA,
+    COUNT(ID) AS numero_de_notas
+FROM NOTAS
+GROUP BY MATERIA
+HAVING COUNT(ID) > 1
+ORDER BY numero_de_notas DESC;
+
+-- Turmas com mais de 27 alunos
+SELECT
+    ANO_LETIVO,
+    SERIE,
+    TURNO,
+    NUMERO_ALUNOS
+FROM TURMAS
+GROUP BY ANO_LETIVO, SERIE, TURNO, NUMERO_ALUNOS -- NUMERO_ALUNOS já é um valor agregado por turma
+HAVING NUMERO_ALUNOS > 27
+ORDER BY NUMERO_ALUNOS DESC;
+                    </code></pre>
+                </div>
+
+                <h3>1.4. Outras Funções de Agregação Úteis (Oracle) <i class="fas fa-plus-square"></i></h3>
+                <p>O Oracle oferece uma variedade de outras funções de agregação para necessidades mais específicas.</p>
+
+                <div class="card">
+                    <h5>a) <code>LISTAGG()</code>: Concatenar Valores em uma Lista</h5>
+                    <p>Agrega valores de strings de múltiplas linhas em uma única string, com um delimitador
+                        especificado. Muito útil para criar listas de itens.</p>
+                    <pre><code class="language-sql">
+-- Listar todos os nomes de alunos por STATUS_MATRICULA
+SELECT
+    STATUS_MATRICULA,
+    LISTAGG(NOME, ', ') WITHIN GROUP (ORDER BY NOME) AS alunos_por_status
+FROM ALUNOS
+GROUP BY STATUS_MATRICULA;
+
+-- Listar matérias ensinadas por cada professor (apenas se o professor tiver turma associada)
+SELECT
+    p.NOME AS nome_professor,
+    LISTAGG(DISTINCT n.MATERIA, ', ') WITHIN GROUP (ORDER BY n.MATERIA) AS materias_ensinadas
+FROM PROFESSORES p
+JOIN TURMAS t ON p.ID = t.PROFESSOR_ID
+JOIN NOTAS n ON t.ID = n.TURMA_ID
+GROUP BY p.NOME
+ORDER BY p.NOME;
+                    </code></pre>
+
+                    <h5>b) <code>STDDEV()</code> e <code>VARIANCE()</code>: Desvio Padrão e Variância</h5>
+                    <p>Calculam o desvio padrão e a variância, respectivamente, de um conjunto de números. Usadas em
+                        análises estatísticas.</p>
+                    <pre><code class="language-sql">
+-- Calcular desvio padrão e variância dos salários dos professores
+SELECT
+    STDDEV(SALARIO) AS desvio_padrao_salarios,
+    VARIANCE(SALARIO) AS variancia_salarios
+FROM PROFESSORES;
+
+-- Desvio padrão e variância das médias finais por matéria
+SELECT
+    MATERIA,
+    STDDEV(MEDIA_FINAL) AS desvio_padrao_medias,
+    VARIANCE(MEDIA_FINAL) AS variancia_medias
+FROM NOTAS
+GROUP BY MATERIA;
+                    </code></pre>
+
+                    <h5>c) <code>FIRST_VALUE()</code> e <code>LAST_VALUE()</code> (Funções Analíticas)</h5>
+                    <p>Retornam o primeiro ou último valor de um conjunto ordenado de linhas dentro de uma janela.
+                        Embora sejam funções analíticas (que veremos mais adiante), podem ser usadas para agregar
+                        informações contextuais.</p>
+                    <pre><code class="language-sql">
+-- Encontrar o aluno com a maior e menor média final em cada turma
+SELECT
+    t.SERIE,
+    t.TURNO,
+    MAX(n.MEDIA_FINAL) AS maior_media_turma,
+    MIN(n.MEDIA_FINAL) AS menor_media_turma,
+    FIRST_VALUE(a.NOME) OVER (PARTITION BY t.ID ORDER BY n.MEDIA_FINAL DESC) AS aluno_maior_media,
+    FIRST_VALUE(a.NOME) OVER (PARTITION BY t.ID ORDER BY n.MEDIA_FINAL ASC) AS aluno_menor_media
+FROM NOTAS n
+JOIN ALUNOS a ON n.ALUNO_ID = a.ID
+JOIN TURMAS t ON n.TURMA_ID = t.ID
+GROUP BY t.ID, t.SERIE, t.TURNO
+ORDER BY t.SERIE, t.TURNO;
+                    </code></pre>
+                </div>
+            </div>
+
+            <div class="sub-section">
+                <h2>2️⃣ Subconsultas (Subqueries) <i class="fas fa-code-branch"></i></h2>
+                <p>Uma subconsulta (ou subquery/inner query/nested query) é uma consulta `SELECT` aninhada dentro de
+                    outra instrução SQL (como `SELECT`, `INSERT`, `UPDATE`, `DELETE`) ou dentro de outra subconsulta.
+                    Elas são usadas para retornar dados que serão utilizados pela consulta principal (outer query).</p>
+
+                <h3>2.1. Tipos de Subconsultas Baseados em Retorno <i class="fas fa-chart-bar"></i></h3>
+
+                <div class="card">
+                    <h5>a) Subconsultas Escalares (Single-Row Subqueries)</h5>
+                    <p>Retornam um único valor (uma única coluna e uma única linha). Podem ser usadas em qualquer lugar
+                        onde uma expressão ou valor é esperado.</p>
+                    <pre><code class="language-sql">
+-- Cenário: Encontrar alunos com média final acima da média geral de todas as notas
+SELECT
+    a.NOME,
+    n.MATERIA,
+    n.MEDIA_FINAL
+FROM ALUNOS a
+JOIN NOTAS n ON a.ID = n.ALUNO_ID
+WHERE n.MEDIA_FINAL > (SELECT AVG(MEDIA_FINAL) FROM NOTAS); -- Subconsulta escalar no WHERE
+
+-- Cenário: Adicionar o número médio de alunos por turma como uma coluna na consulta principal
+SELECT
+    t.SERIE,
+    t.TURNO,
+    t.NUMERO_ALUNOS,
+    (SELECT AVG(NUMERO_ALUNOS) FROM TURMAS) AS media_alunos_por_turma -- Subconsulta escalar no SELECT
+FROM TURMAS t
+ORDER BY t.SERIE, t.TURNO;
+                    </code></pre>
+
+                    <h5>b) Subconsultas de Múltiplas Linhas (Multi-Row Subqueries)</h5>
+                    <p>Retornam uma lista de valores (uma única coluna e várias linhas). Geralmente usadas com
+                        operadores como `IN`, `NOT IN`, `ANY`, `ALL`, `EXISTS`, `NOT EXISTS`.</p>
+                    <pre><code class="language-sql">
+-- Cenário: Alunos que estão matriculados em turmas do '1º Ano' (usando IN)
+SELECT
+    NOME,
+    STATUS_MATRICULA
+FROM ALUNOS
+WHERE ID IN (SELECT DISTINCT ALUNO_ID FROM NOTAS WHERE TURMA_ID IN (SELECT ID FROM TURMAS WHERE SERIE = '1º Ano'));
+
+-- Cenário: Professores que NUNCA lecionaram em turmas do '3º Ano' (usando NOT IN)
+SELECT
+    NOME,
+    ESPECIALIDADE
+FROM PROFESSORES
+WHERE ID NOT IN (SELECT DISTINCT PROFESSOR_ID FROM TURMAS WHERE SERIE = '3º Ano');
+
+-- Cenário: Encontrar turmas que têm pelo menos um aluno com 'Ativo' status (usando EXISTS)
+SELECT
+    t.SERIE,
+    t.TURNO
+FROM TURMAS t
+WHERE EXISTS (SELECT 1 FROM ALUNOS a JOIN NOTAS n ON a.ID = n.ALUNO_ID WHERE n.TURMA_ID = t.ID AND a.STATUS_MATRICULA = 'Ativo');
+
+-- Cenário: Alunos com média final maior que QUALQUER nota 1 da matéria 'História' (usando ANY)
+SELECT
+    a.NOME,
+    n.MATERIA,
+    n.MEDIA_FINAL
+FROM ALUNOS a
+JOIN NOTAS n ON a.ID = n.ALUNO_ID
+WHERE n.MEDIA_FINAL > ANY (SELECT NOTA_1 FROM NOTAS WHERE MATERIA = 'História');
+-- Equivalente a: MEDIA_FINAL > MIN(NOTA_1 da matéria História)
+
+-- Cenário: Alunos com média final maior que TODAS as notas 1 da matéria 'Matemática' (usando ALL)
+SELECT
+    a.NOME,
+    n.MATERIA,
+    n.MEDIA_FINAL
+FROM ALUNOS a
+JOIN NOTAS n ON a.ID = n.ALUNO_ID
+WHERE n.MEDIA_FINAL > ALL (SELECT NOTA_1 FROM NOTAS WHERE MATERIA = 'Matemática');
+-- Equivalente a: MEDIA_FINAL > MAX(NOTA_1 da matéria Matemática)
+                    </code></pre>
+                </div>
+
+                <h3>2.2. Subconsultas Correlacionadas (Correlated Subqueries) <i class="fas fa-exchange-alt"></i></h3>
+                <p>Uma subconsulta correlacionada é executada uma vez para cada linha processada pela consulta externa.
+                    Ela depende da consulta externa para seus valores e não pode ser executada independentemente. São
+                    poderosas para cenários de "para cada linha, faça algo baseado nessa linha".</p>
+                <div class="card">
+                    <h4>Cenário: Encontrar a nota mais alta de cada aluno em cada matéria</h4>
+                    <pre><code class="language-sql">
+SELECT
+    a.NOME AS nome_aluno,
+    n.MATERIA,
+    n.MEDIA_FINAL
+FROM ALUNOS a
+JOIN NOTAS n ON a.ID = n.ALUNO_ID
+WHERE n.MEDIA_FINAL = (SELECT MAX(MEDIA_FINAL) FROM NOTAS WHERE ALUNO_ID = n.ALUNO_ID AND MATERIA = n.MATERIA);
+-- Para cada nota (n), ela encontra a média final máxima para o ALUNO e MATERIA DAQUELA NOTA
+-- e verifica se a média final da nota atual é igual a essa média máxima.
+                    </code></pre>
+                    <h4>Cenário: Professores que foram admitidos no mesmo ano que o professor 'Carlos Souza'</h4>
+                    <pre><code class="language-sql">
+SELECT
+    NOME,
+    DT_ADIMISSAO
+FROM PROFESSORES p1
+WHERE TO_CHAR(p1.DT_ADIMISSAO, 'YYYY') = (SELECT TO_CHAR(DT_ADIMISSAO, 'YYYY') FROM PROFESSORES WHERE NOME = 'Carlos Souza')
+AND p1.NOME != 'Carlos Souza';
+                    </code></pre>
+                </div>
+
+                <h3>2.3. Subconsultas no <code>FROM</code> (Inline Views / Tabelas Derivadas) <i
+                        class="fas fa-table"></i></h3>
+                <p>Uma subconsulta no `FROM` age como uma tabela temporária que é criada e usada apenas durante a
+                    execução da consulta principal. Isso permite pré-processar dados ou simplificar consultas complexas,
+                    aplicando agregações ou filtros antes de fazer um `JOIN` ou outras operações.</p>
+                <div class="card">
+                    <h4>Cenário: Analisar a média de notas por turma, mas apenas para turmas com mais de 25 alunos</h4>
+                    <pre><code class="language-sql">
+SELECT
+    turmas_grandes.SERIE,
+    turmas_grandes.TURNO,
+    AVG(n.MEDIA_FINAL) AS media_notas_turma
+FROM NOTAS n
+JOIN (
+    -- Esta é a subconsulta (inline view) que atua como uma tabela temporária
+    SELECT
+        ID,
+        SERIE,
+        TURNO
+    FROM TURMAS
+    WHERE NUMERO_ALUNOS > 25 -- Apenas turmas com mais de 25 alunos
+) turmas_grandes ON n.TURMA_ID = turmas_grandes.ID -- Dando um alias para a sua subconsulta
+GROUP BY turmas_grandes.SERIE, turmas_grandes.TURNO
+ORDER BY media_notas_turma DESC;
+                    </code></pre>
+                    <h4>Cenário: Encontrar o aluno com a maior média final em cada turma</h4>
+                    <pre><code class="language-sql">
+SELECT
+    t1.SERIE,
+    t1.TURNO,
+    t1.NOME_ALUNO,
+    t1.MEDIA_FINAL_ALUNO
+FROM (
+    SELECT
+        t.SERIE,
+        t.TURNO,
+        a.NOME AS NOME_ALUNO,
+        n.MEDIA_FINAL AS MEDIA_FINAL_ALUNO,
+        ROW_NUMBER() OVER (PARTITION BY t.ID ORDER BY n.MEDIA_FINAL DESC) as rn -- Função analítica para ranquear
+    FROM NOTAS n
+    JOIN ALUNOS a ON n.ALUNO_ID = a.ID
+    JOIN TURMAS t ON n.TURMA_ID = t.ID
+) t1
+WHERE t1.rn = 1 -- Seleciona apenas o aluno com a maior média (ranque 1) em cada turma
+ORDER BY t1.SERIE, t1.TURNO;
+                    </code></pre>
+                </div>
+
+                <h3>2.4. Subconsultas no <code>SELECT</code> (Expressões Escalares) <i class="fas fa-columns"></i></h3>
+                <p>Uma subconsulta escalar no `SELECT` retorna um único valor para cada linha da consulta externa. É
+                    útil para adicionar informações agregadas ou contextuais de outras tabelas sem a necessidade de um
+                    `JOIN` completo, especialmente quando a relação é 1:1 ou para agregar um único valor.</p>
+                <div class="card">
+                    <h4>Cenário: Listar alunos e a média geral de suas notas (se houver)</h4>
+                    <pre><code class="language-sql">
+SELECT
+    a.NOME,
+    a.DATA_NASCIMENTO,
+    (SELECT AVG(n.MEDIA_FINAL) FROM NOTAS n WHERE n.ALUNO_ID = a.ID) AS media_geral_aluno,
+    (SELECT COUNT(n.ID) FROM NOTAS n WHERE n.ALUNO_ID = a.ID) AS total_materias_cursadas
+FROM ALUNOS a
+ORDER BY a.NOME;
+                    </code></pre>
+                    <h4>Cenário: Listar turmas e o nome do professor responsável</h4>
+                    <pre><code class="language-sql">
+SELECT
+    t.ANO_LETIVO,
+    t.SERIE,
+    t.TURNO,
+    t.NUMERO_ALUNOS,
+    (SELECT p.NOME FROM PROFESSORES p WHERE p.ID = t.PROFESSOR_ID) AS nome_professor_responsavel
+FROM TURMAS t
+ORDER BY t.ANO_LETIVO, t.SERIE, t.TURNO;
+                    </code></pre>
+                </div>
+            </div>
+
+            <div class="exercise">
+                <h2>Exercícios Práticos <i class="fas fa-question-circle"></i></h2>
+                <p>Use as tabelas `ALUNOS`, `PROFESSORES`, `TURMAS` e `NOTAS` criadas no início desta página para
+                    resolver os desafios abaixo:
+                </p>
+                <div class="card">
+                    <ol class="padding-r-10">
+                        <li>
+                            <p><strong>Salário Total e Média de Alunos por Turma:</strong></p>
+                            <p>Calcule a soma total dos salários de todos os professores e a média do número de alunos
+                                por turma.</p>
+                            <button onclick="toggleAnswer('ansEx1')">Mostrar Gabarito</button>
+                            <div class="answer" id="ansEx1">
+                                <pre><code class="language-sql">
+SELECT
+    SUM(SALARIO) AS salario_total_professores,
+    AVG(NUMERO_ALUNOS) AS media_alunos_por_turma
+FROM PROFESSORES, TURMAS;
+                                </code></pre>
+                            </div>
+                        </li>
+                        <li>
+                            <p><strong>Múltiplas Agregações por Série e Turno:</strong></p>
+                            <p>Para cada série e turno, encontre:</p>
+                            <ul>
+                                <li>O número total de turmas.</li>
+                                <li>A soma total de alunos nessas turmas.</li>
+                                <li>A média do número de alunos por turma.</li>
+                                <li>O maior número de alunos em uma única turma.</li>
+                            </ul>
+                            <p>Ordene os resultados por série e depois por turno.</p>
+                            <button onclick="toggleAnswer('ansEx2')">Mostrar Gabarito</button>
+                            <div class="answer" id="ansEx2">
+                                <pre><code class="language-sql">
+SELECT
+    SERIE,
+    TURNO,
+    COUNT(ID) AS total_turmas,
+    SUM(NUMERO_ALUNOS) AS soma_total_alunos,
+    AVG(NUMERO_ALUNOS) AS media_alunos_por_turma,
+    MAX(NUMERO_ALUNOS) AS maior_numero_alunos_turma
+FROM TURMAS
+GROUP BY SERIE, TURNO
+ORDER BY SERIE, TURNO;
+                                </code></pre>
+                            </div>
+                        </li>
+                        <li>
+                            <p><strong>Professores com Salário Acima da Média da Especialidade:</strong></p>
+                            <p>Liste as especialidades de professores onde o salário médio, para essa especialidade, foi
+                                superior a 3100.</p>
+                            <button onclick="toggleAnswer('ansEx3')">Mostrar Gabarito</button>
+                            <div class="answer" id="ansEx3">
+                                <pre><code class="language-sql">
+SELECT
+    ESPECIALIDADE,
+    AVG(SALARIO) AS salario_medio_especialidade
+FROM PROFESSORES
+GROUP BY ESPECIALIDADE
+HAVING AVG(SALARIO) > 3100
+ORDER BY salario_medio_especialidade DESC;
+                                </code></pre>
+                            </div>
+                        </li>
+                        <li>
+                            <p><strong>Alunos com a Maior Média Final por Turma (Usando Subconsulta no FROM):</strong>
+                            </p>
+                            <p>Para cada turma, encontre o nome do aluno com a maior média final e sua respectiva média.
+                                Utilize uma subconsulta no `FROM` (inline view) para resolver.</p>
+                            <button onclick="toggleAnswer('ansEx4')">Mostrar Gabarito</button>
+                            <div class="answer" id="ansEx4">
+                                <pre><code class="language-sql">
+SELECT
+    t.SERIE,
+    t.TURNO,
+    t1.NOME_ALUNO,
+    t1.MEDIA_FINAL_ALUNO
+FROM TURMAS t
+JOIN (
+    SELECT
+        n.TURMA_ID,
+        a.NOME AS NOME_ALUNO,
+        n.MEDIA_FINAL AS MEDIA_FINAL_ALUNO,
+        ROW_NUMBER() OVER (PARTITION BY n.TURMA_ID ORDER BY n.MEDIA_FINAL DESC) as rn
+    FROM NOTAS n
+    JOIN ALUNOS a ON n.ALUNO_ID = a.ID
+) t1 ON t.ID = t1.TURMA_ID
+WHERE t1.rn = 1
+ORDER BY t.SERIE, t.TURNO;
+                                </code></pre>
+                            </div>
+                        </li>
+                        <li>
+                            <p><strong>Notas Acima da Média de uma Matéria Específica (Usando Subconsulta
+                                    Correlacionada):</strong>
+                            </p>
+                            <p>Encontre todas as notas (`ID`, `ALUNO_ID`, `MATERIA`, `MEDIA_FINAL`) onde a `MEDIA_FINAL`
+                                é superior à média final de todas as notas para aquela `MATERIA` específica.</p>
+                            <button onclick="toggleAnswer('ansEx5')">Mostrar Gabarito</button>
+                            <div class="answer" id="ansEx5">
+                                <pre><code class="language-sql">
+SELECT
+    n.ID,
+    a.NOME AS nome_aluno,
+    n.MATERIA,
+    n.MEDIA_FINAL
+FROM NOTAS n
+JOIN ALUNOS a ON n.ALUNO_ID = a.ID
+WHERE n.MEDIA_FINAL > (SELECT AVG(MEDIA_FINAL) FROM NOTAS WHERE MATERIA = n.MATERIA)
+ORDER BY n.MATERIA, n.MEDIA_FINAL DESC;
+                                </code></pre>
+                            </div>
+                        </li>
+                        <li>
+                            <p><strong>Informações Completas dos Professores e suas Turmas (Usando Subconsultas no
+                                    SELECT):</strong></p>
+                            <p>Liste todos os professores (`ID`, `NOME`, `ESPECIALIDADE`, `SALARIO`). Para cada
+                                professor, inclua em colunas adicionais:</p>
+                            <ul>
+                                <li>O número total de turmas que ele leciona.</li>
+                                <li>A soma total de alunos em suas turmas.</li>
+                            </ul>
+                            <p>Se um professor não leciona em nenhuma turma, essas colunas devem mostrar `0` ou `NULL`.
+                            </p>
+                            <button onclick="toggleAnswer('ansEx6')">Mostrar Gabarito</button>
+                            <div class="answer" id="ansEx6">
+                                <pre><code class="language-sql">
+SELECT
+    p.ID,
+    p.NOME,
+    p.ESPECIALIDADE,
+    p.SALARIO,
+    (SELECT COUNT(t.ID) FROM TURMAS t WHERE t.PROFESSOR_ID = p.ID) AS total_turmas_lecionadas,
+    NVL((SELECT SUM(t.NUMERO_ALUNOS) FROM TURMAS t WHERE t.PROFESSOR_ID = p.ID), 0) AS total_alunos_turmas
+FROM PROFESSORES p
+ORDER BY p.NOME;
+                                </code></pre>
+                            </div>
+                        </li>
+                    </ol>
+                </div>
+            </div>
+
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                // Função para carregar o menu
+                function loadMenu() {
+                    fetch('/menu.html') // Certifique-se de que este caminho está correto para o seu ambiente
+                        .then(response => response.text())
+                        .then(data => {
+                            document.getElementById('menu-placeholder').innerHTML = data;
+                            initializeSidebar(); // Inicializa a funcionalidade da sidebar após carregar o menu
+                        })
+                        .catch(error => console.error('Erro ao carregar o menu:', error));
+                }
+
+                function initializeSidebar() {
+                    const hamburgerMenu = document.getElementById('hamburger-menu');
+                    const sidebar = document.getElementById('sidebar');
+                    const content = document.getElementById('content');
+                    const overlay = document.getElementById('overlay');
+                    const sidebarLinks = sidebar.querySelectorAll('a');
+
+                    function toggleSidebar() {
+                        sidebar.classList.toggle('active');
+                        content.classList.toggle('sidebar-active');
+                        overlay.classList.toggle('active');
+                    }
+
+                    hamburgerMenu.addEventListener('click', toggleSidebar);
+                    overlay.addEventListener('click', toggleSidebar);
+
+                    sidebarLinks.forEach(link => {
+                        link.addEventListener('click', function () {
+                            if (sidebar.classList.contains('active')) {
+                                toggleSidebar();
+                            }
+                        });
+                    });
+
+                    function highlightActiveLink() {
+                        const currentPath = window.location.pathname.split('/').pop();
+                        sidebarLinks.forEach(link => {
+                            const linkPath = link.getAttribute('href');
+                            // Adicionamos a lógica para 'Conceitos Fundamentais de Banco de Dados.html'
+                            if (linkPath === currentPath || (currentPath === '' && linkPath === 'index.html')) {
+                                link.classList.add('active');
+                            } else {
+                                link.classList.remove('active');
+                            }
+                        });
+                    }
+
+                    highlightActiveLink();
+                }
+
+                // Carrega o menu quando o DOM estiver pronto
+                loadMenu();
+
+                // Função para mostrar/esconder o gabarito
+                window.toggleAnswer = function (id) {
+                    var x = document.getElementById(id);
+                    if (x.style.display === "none" || x.style.display === "") {
+                        x.style.display = "block";
+                    } else {
+                        x.style.display = "none";
+                    }
+                };
+            });
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+    </div>
+</body>
+
+</html>

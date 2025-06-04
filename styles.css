@@ -1,0 +1,411 @@
+/* Reset básico */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* styles.css */
+
+/* Garante que o tema padrão do Prism.js tenha um fundo escuro */
+pre[class*="language-"] {
+  background: #2D2D2D; /* Fundo escuro */
+  color: #CCCCCC; /* Cor do texto padrão do código */
+}
+
+/* Estilo para comentários no Prism.js */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #88B04B !important; /* Verde mais vivo para comentários */
+  font-style: italic; /* Opcional: para diferenciar ainda mais */
+}
+
+/* Outros tokens do Prism.js que você pode querer ajustar para maior contraste */
+.token.punctuation {
+  color: #CCCCCC; /* Pontuação mais visível */
+}
+
+.token.selector,
+.token.tag,
+.token.attr-name,
+.token.attr-value,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #A5C261; /* Exemplo de cor para strings/outros */
+}
+
+.token.function,
+.token.class-name,
+.token.number,
+.token.boolean,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #FFD700; /* Exemplo de cor para números/funções */
+}
+
+.token.property,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: #6BE4E4; /* Exemplo de cor para propriedades/URL */
+}
+
+.token.atrule,
+.token.keyword {
+  color: #CC99CD; /* Exemplo de cor para palavras-chave (SELECT, FROM, WHERE) */
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+  color: #FF6347; /* Exemplo de cor para regex/importante */
+}
+
+/* styles.css */
+
+/* Adicione ou modifique esta seção para a cor dos comentários do Prism.js */
+.token.comment {
+  color: #88B04B; /* Um tom de verde mais vivo, você pode experimentar! */
+  /* Outras opções de cores: */
+  /* color: #6BE4E4;   Ciano */
+  /* color: #FFD700;   Amarelo ouro */
+  /* color: #FF69B4;   Rosa choque */
+  font-style: italic; /* Opcional: para diferenciar ainda mais */
+}
+
+/* Opcional: Se quiser a cor do código principal também mais forte */
+.token.keyword {
+  color: #CC99CD; /* Um tom de roxo/magenta para keywords */
+}
+
+.token.string {
+  color: #A5C261; /* Um tom de verde diferente para strings */
+}
+
+/* Garanta que o background do bloco de código ainda seja escuro */
+pre[class*="language-"] {
+  background: #2D2D2D; /* Fundo escuro */
+  color: #CCCCCC; /* Cor do texto padrão do código */
+}
+
+/* Nova fonte e cores ajustadas */
+body {
+  font-family: 'Roboto', sans-serif; /* Fonte moderna */
+  background-color: #0d1117; /* Um pouco mais escuro para contraste */
+  color: #c9d1d9; /* Cor de texto mais suave */
+  display: flex;
+  min-height: 100vh;
+  line-height: 1.6; /* Melhorar legibilidade */
+}
+
+/* Sidebar */
+.sidebar {
+  width: 250px;
+  background-color: #010409; /* Fundo mais escuro */
+  color: #58a6ff; /* Azul vibrante para destaque */
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+  padding-top: 20px;
+  border-right: 2px solid #58a6ff; /* Borda destacada */
+  transition: transform 0.3s ease-in-out; /* Transição para o menu responsivo */
+  z-index: 1000; /* Garante que fique por cima */
+}
+
+.sidebar h2 {
+  text-align: center;
+  margin-bottom: 30px; /* Mais espaço */
+  font-size: 1.8em;
+  color: #58a6ff; /* Cor do título da sidebar */
+}
+
+.sidebar a {
+  display: flex; /* Para alinhar ícone e texto */
+  align-items: center; /* Centralizar verticalmente */
+  color: #c9d1d9; /* Cor padrão dos links */
+  padding: 12px 20px;
+  text-decoration: none;
+  border-left: 4px solid transparent;
+  transition: 0.3s ease; /* Transição mais suave */
+}
+
+.sidebar a i {
+  margin-right: 10px; /* Espaçamento entre ícone e texto */
+  color: #58a6ff; /* Cor dos ícones */
+}
+
+.sidebar a:hover {
+  background-color: #161b22; /* Fundo mais escuro ao passar o mouse */
+  border-left: 4px solid #58a6ff; /* Borda azul ao passar o mouse */
+  color: #ffffff; /* Texto branco ao passar o mouse */
+}
+
+.sidebar a.active {
+  background-color: #161b22; /* Fundo para o item ativo */
+  border-left: 4px solid #58a6ff; /* Borda azul para o item ativo */
+  color: #ffffff; /* Texto branco para o item ativo */
+  font-weight: bold; /* Deixar o texto ativo em negrito */
+}
+
+/* Conteúdo */
+.content {
+  margin-left: 250px; /* Ocupa o espaço da sidebar */
+  padding: 20px;
+  flex-grow: 1; /* Permite que o conteúdo cresça */
+  transition: margin-left 0.3s ease-in-out; /* Transição para o menu responsivo */
+}
+
+.content header {
+  background-color: #161b22; /* Fundo do cabeçalho */
+  padding: 30px 25px; /* Mais preenchimento */
+  margin-bottom: 30px; /* Mais espaço abaixo do cabeçalho */
+  border-bottom: 2px solid #58a6ff; /* Borda de destaque */
+  text-align: center;
+  border-radius: 6px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra sutil */
+}
+
+.content header h1 {
+  color: #ffffff; /* Cor do título principal */
+  font-size: 2.5em;
+  margin-bottom: 10px;
+}
+
+.content header p {
+  color: #c9d1d9;
+  font-size: 1.1em;
+}
+
+.banner {
+  margin-bottom: 40px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); /* Sombra mais pronunciada para o banner */
+}
+
+.banner img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.intro, .video {
+  background-color: #161b22;
+  padding: 25px;
+  margin-bottom: 40px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra sutil */
+}
+
+.intro h2, .video h2 {
+  color: #58a6ff;
+  margin-bottom: 15px;
+  font-size: 1.8em;
+}
+
+.video iframe {
+  width: 100%;
+  height: 400px; /* Altura padrão para o vídeo */
+  border: none;
+  border-radius: 8px;
+}
+
+.main-section {
+  padding: 20px 0; /* Ajuste no preenchimento */
+  max-width: 900px; /* Largura máxima para melhor leitura */
+  margin: 0 auto;
+}
+
+.sub-section {
+  margin-bottom: 40px;
+  padding: 25px; /* Mais preenchimento */
+  border-left: 5px solid #58a6ff; /* Borda mais grossa e azul */
+  background-color: #1a1f1e;
+  border-radius: 8px; /* Cantos mais arredondados */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra sutil */
+}
+
+.sub-section h2 {
+  margin-bottom: 20px; /* Mais espaço */
+  color: #58a6ff;
+  font-size: 2em;
+}
+
+.card {
+  background-color: #222831;
+  padding: 20px; /* Mais preenchimento */
+  margin-top: 25px; /* Mais espaço acima do card */
+  border-radius: 8px; /* Cantos mais arredondados */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Sombra sutil */
+  border: 1px solid #30363d; /* Borda discreta */
+}
+
+.card h4 {
+  margin-bottom: 15px; /* Mais espaço */
+  color: #58a6ff;
+  font-size: 1.3em;
+}
+
+/* Estilos aprimorados para os Exercícios */
+.exercise {
+  background-color: #2e3b4e; /* Fundo levemente diferente para destacar o bloco do exercício */
+  border-left: 5px solid #4CAF50; /* Borda colorida (verde) para chamar a atenção para o exercício */
+  padding: 20px;
+  margin-bottom: 25px; /* Mais espaço abaixo de cada exercício */
+  margin-top: 30px; /* Mais espaço acima para separar do conteúdo anterior */
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Sombra sutil e mais pronunciada */
+}
+
+.exercise strong {
+  color: #f0f0f0; /* Cor para o texto forte do título do exercício */
+  font-size: 1.2em; /* Um pouco maior para o título do exercício */
+  display: block; /* Garante que o strong ocupe sua própria linha */
+  margin-bottom: 15px; /* Espaço abaixo do título do exercício */
+}
+
+.exercise ul {
+  margin-top: 10px;
+  margin-bottom: 15px;
+  padding-left: 25px; /* Recuo para a lista de itens do exercício */
+  color: #ccc; /* Cor do texto da lista */
+}
+
+.exercise ul li {
+  margin-bottom: 5px;
+}
+
+.exercise ol li .answer{
+  margin-bottom: 5px;
+}
+
+ol, ul {
+    padding-left: 1em;
+}
+
+h3, h4{
+    margin-top: 10px;
+}
+
+.exercise button {
+  background-color: #58a6ff; /* Cor azul vibrante para o botão */
+  color: white;
+  padding: 10px 20px; /* Mais preenchimento no botão */
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: bold;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  margin-top: 15px; /* Espaço acima do botão */
+}
+
+.exercise button:hover {
+  background-color: #4088ff; /* Escurece no hover */
+  transform: translateY(-2px); /* Efeito de "levantar" */
+}
+
+.exercise button:active {
+  background-color: #2c6ad9; /* Cor mais escura no clique */
+  transform: translateY(0); /* Volta à posição normal */
+}
+
+/* Estilo para a resposta do gabarito */
+.answer {
+  background-color: #1f2428; /* Fundo mais escuro para o gabarito */
+  padding: 18px; /* Mais preenchimento */
+  margin-top: 20px; /* Mais espaço acima do gabarito */
+  border-radius: 6px;
+  border: 1px solid #30363d;
+  display: none; /* Inicia oculto */
+  overflow-x: auto; /* Adicionado para rolagem horizontal em blocos de código grandes */
+}
+
+.answer pre {
+  margin: 0; /* Garante que o <pre> não adicione margens extras */
+}
+
+.answer code {
+  white-space: pre-wrap; /* Permite que o código quebre linha */
+  word-break: break-all; /* Força quebra de palavras longas */
+}
+
+pre[class*="language-"] {
+  background-color: #0d1117 !important; /* Fundo do código mais escuro */
+  border: 1px solid #30363d !important; /* Borda discreta para o bloco de código */
+  border-radius: 6px !important;
+  padding: 1em !important;
+  overflow: auto;
+}
+
+code[class*="language-"] {
+  color: #c9d1d9 !important; /* Cor do texto do código */
+  background: none !important;
+}
+
+/* Estilos para o menu hambúrguer */
+.hamburger-menu {
+  display: none; /* Esconde por padrão em telas grandes */
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1001; /* Fica acima da sidebar */
+  background-color: #58a6ff;
+  color: #fff;
+  border: none;
+  border-radius: 50%; /* Botão redondo */
+  width: 45px;
+  height: 45px;
+  font-size: 1.5em;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s ease;
+}
+
+.hamburger-menu:hover {
+  background-color: #4088ff;
+}
+
+/* Responsividade */
+@media screen and (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%); /* Esconde a sidebar fora da tela */
+    width: 200px; /* Largura menor em telas pequenas */
+  }
+
+  .sidebar.active {
+    transform: translateX(0); /* Mostra a sidebar ao ativar */
+  }
+
+  .content {
+    margin-left: 0; /* Remove a margem da sidebar */
+    padding-left: 80px; /* Espaço para o botão do hambúrguer */
+  }
+
+  .content.sidebar-active {
+    margin-left: 200px; /* Empurra o conteúdo quando a sidebar está ativa */
+  }
+
+  .hamburger-menu {
+    display: block; /* Mostra o botão hambúrguer */
+  }
+}
+.padding-r-10{
+    padding: 1em !important
+}
+
+@media screen and (max-width: 480px) {
+  .content header h1 {
+    font-size: 1.8em;
+  }
+
+  .video iframe {
+    height: 250px;
+  }
+}

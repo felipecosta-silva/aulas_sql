@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SQL - Fundamentos Avançados</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+</head>
+
+<body>
+  <div id="menu-placeholder"></div>
+
+  <div class="content" id="content">
+    <header>
+      <h1>SQL - Fundamentos Avançados</h1>
+      <p>Explore as operações de JOIN, UNION e Self-Join para combinar e manipular dados de múltiplas tabelas de
+        forma eficaz.</p>
+    </header>
+
+    <div class="main-section">
+
+      <div class="sub-section">
+        <h2>0️⃣ Configuração Inicial: Criação das Tabelas e Inserção de Dados <i class="fas fa-database"></i>
+        </h2>
+        <p>Para praticar as operações de JOIN e Conjunto, vamos configurar as tabelas:
+          `ALUNOS`, `PROFESSORES`, `DISCIPLINAS`, `TURMAS`, `NOTAS` e `MATRICULAS_DISCIPLINAS`.</p>
+
+        <div class="card">
+          <h4>Criação e População das Tabelas</h4>
+          <pre><code class="language-sql">
+-- Remover tabelas antigas se existirem (a ordem importa devido às chaves estrangeiras)
+DROP TABLE MATRICULAS_DISCIPLINAS CASCADE CONSTRAINTS;
+DROP TABLE NOTAS CASCADE CONSTRAINTS;
+DROP TABLE TURMAS CASCADE CONSTRAINTS;
+DROP TABLE DISCIPLINAS CASCADE CONSTRAINTS;
+DROP TABLE PROFESSORES CASCADE CONSTRAINTS;
+DROP TABLE ALUNOS CASCADE CONSTRAINTS;
+
+
+-- Tabela ALUNOS
+CREATE TABLE ALUNOS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    NOME VARCHAR2(255) NOT NULL,
+    DATA_NASCIMENTO DATE NOT NULL,
+    TELEFONE VARCHAR2(20) DEFAULT 'Não informado',
+    SEXO VARCHAR2(1),
+    EMAIL VARCHAR2(255),
+    DATA_MATRIICULA DATE NOT NULL,
+    STATUS_MATRICULA VARCHAR2(20) CHECK (STATUS_MATRICULA IN ('Ativo', 'Transferido', 'Trancado'))
+);
+
+-- Tabela PROFESSORES
+CREATE TABLE PROFESSORES (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    NOME VARCHAR2(150) NOT NULL,
+    ESPECIALIDADE VARCHAR2(100) NOT NULL,
+    DT_ADIMISSAO DATE NOT NULL,
+    TELEFONE VARCHAR2(20),
+    EMAIL VARCHAR2(150),
+    SALARIO NUMBER(10,2) NOT NULL
+);
+
+-- Tabela DISCIPLINAS
+CREATE TABLE DISCIPLINAS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    NOME_DISCIPLINA VARCHAR2(100) NOT NULL UNIQUE,
+    CARGA_HORARIA NUMBER(3) NOT NULL,
+    PROFESSOR_RESPONSAVEL_ID NUMBER,
+    CONSTRAINT FK_PROF_DISC FOREIGN KEY (PROFESSOR_RESPONSAVEL_ID) REFERENCES PROFESSORES (ID)
+);
+
+-- Tabela TURMAS
+CREATE TABLE TURMAS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    ANO_LETIVO NUMBER(4) NOT NULL,
+    SERIE VARCHAR2(20) NOT NULL,
+    TURNO VARCHAR2(1) CHECK (TURNO IN('M','T','N')),
+    PROFESSOR_ID NUMBER,
+    NUMERO_ALUNOS NUMBER(3) CHECK (NUMERO_ALUNOS >= 2),
+    CONSTRAINT FK_PROFESSOR FOREIGN KEY (PROFESSOR_ID) REFERENCES PROFESSORES (ID)
+);
+
+-- Tabela NOTAS
+CREATE TABLE NOTAS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    ALUNO_ID NUMBER,
+    TURMA_ID NUMBER,
+    DISCIPLINA_ID NUMBER,
+    NOTA_1  NUMBER(5,2),
+    NOTA_2  NUMBER(5,2),
+    NOTA_3  NUMBER(5,2),
+    NOTA_4  NUMBER(5,2),
+    MEDIA_FINAL NUMBER(5,2),
+    CONSTRAINT fk_aluno  FOREIGN KEY (aluno_id)
+        REFERENCES Alunos(id),
+    CONSTRAINT fk_turma
+        FOREIGN KEY (turma_id)
+        REFERENCES Turmas(id),
+    CONSTRAINT fk_disciplina FOREIGN KEY (DISCIPLINA_ID)
+        REFERENCES DISCIPLINAS(ID)
+);
+
+-- Tabela MATRICULAS_DISCIPLINAS (para relacionar alunos a disciplinas)
+CREATE TABLE MATRICULAS_DISCIPLINAS (
+    ID NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
+    ALUNO_ID NUMBER NOT NULL,
+    DISCIPLINA_ID NUMBER NOT NULL,
+    DATA_MATRICULA DATE DEFAULT SYSDATE,
+    CONSTRAINT FK_MATRICULA_ALUNO FOREIGN KEY (ALUNO_ID) REFERENCES ALUNOS (ID),
+    CONSTRAINT FK_MATRICULA_DISC FOREIGN KEY (DISCIPLINA_ID) REFERENCES DISCIPLINAS (ID),
+    CONSTRAINT UK_ALUNO_DISCIPLINA UNIQUE (ALUNO_ID, DISCIPLINA_ID)
+);
+
+-- Inserção de dados na tabela ALUNOS
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, TELEFONE, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('João Silva', TO_DATE('2005-03-15', 'YYYY-MM-DD'), '99999-1234', 'M', 'joao.silva@email.com', TO_DATE('2020-02-10', 'YYYY-MM-DD'), 'Ativo');
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, TELEFONE, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('Maria Oliveira', TO_DATE('2004-07-21', 'YYYY-MM-DD'), '99999-5678', 'F', 'maria.oliveira@email.com', TO_DATE('2019-03-01', 'YYYY-MM-DD'), 'Transferido');
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, TELEFONE, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('Lucas Pereira', TO_DATE('2006-12-10', 'YYYY-MM-DD'), '99999-9876', 'M', 'lucas.pereira@email.com', TO_DATE('2021-03-15', 'YYYY-MM-DD'), 'Ativo');
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, TELEFONE, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('Ana Souza', TO_DATE('2005-01-20', 'YYYY-MM-DD'), '99999-1111', 'F', 'ana.souza@email.com', TO_DATE('2020-08-01', 'YYYY-MM-DD'), 'Ativo');
+INSERT INTO ALUNOS (NOME, DATA_NASCIMENTO, TELEFONE, SEXO, EMAIL, DATA_MATRIICULA, STATUS_MATRICULA)
+VALUES ('Pedro Santos', TO_DATE('2007-09-05', 'YYYY-MM-DD'), '99999-2222', 'M', 'pedro.santos@email.com', TO_DATE('2022-01-20', 'YYYY-MM-DD'), 'Ativo');
+
+
+-- Inserção de dados na tabela PROFESSORES
+INSERT INTO PROFESSORES (NOME, ESPECIALIDADE, DT_ADIMISSAO, TELEFONE, EMAIL, SALARIO)
+VALUES ('Carlos Souza', 'Matemática', TO_DATE('2015-02-25', 'YYYY-MM-DD'), '99999-1234', 'carlos.souza@email.com', 3500.00); -- ID 1
+INSERT INTO PROFESSORES (NOME, ESPECIALIDADE, DT_ADIMISSAO, TELEFONE, EMAIL, SALARIO)
+VALUES ('Ana Costa', 'Português', TO_DATE('2017-06-10', 'YYYY-MM-DD'), '99999-5678', 'ana.costa@email.com', 3000.00); -- ID 2
+INSERT INTO PROFESSORES (NOME, ESPECIALIDADE, DT_ADIMISSAO, TELEFONE, EMAIL, SALARIO)
+VALUES ('Ricardo Almeida', 'História', TO_DATE('2019-09-15', 'YYYY-MM-DD'), '99999-2468', 'ricardo.almeida@email.com', 2800.00); -- ID 3
+INSERT INTO PROFESSORES (NOME, ESPECIALIDADE, DT_ADIMISSAO, TELEFONE, EMAIL, SALARIO)
+VALUES ('Mariana Lima', 'Ciências', TO_DATE('2018-03-01', 'YYYY-MM-DD'), '99999-3333', 'mariana.lima@email.com', 3200.00); -- ID 4
+INSERT INTO PROFESSORES (NOME, ESPECIALIDADE, DT_ADIMISSAO, TELEFONE, EMAIL, SALARIO)
+VALUES ('Fernanda Rocha', 'Literatura', TO_DATE('2020-01-01', 'YYYY-MM-DD'), '99999-4444', 'fernanda.rocha@email.com', 3100.00); -- ID 5
+
+
+-- Inserção de dados na tabela DISCIPLINAS
+INSERT INTO DISCIPLINAS (NOME_DISCIPLINA, CARGA_HORARIA, PROFESSOR_RESPONSAVEL_ID)
+VALUES ('Matemática', 80, 1); -- Carlos Souza (ID 1)
+INSERT INTO DISCIPLINAS (NOME_DISCIPLINA, CARGA_HORARIA, PROFESSOR_RESPONSAVEL_ID)
+VALUES ('Português', 70, 2); -- Ana Costa (ID 2)
+INSERT INTO DISCIPLINAS (NOME_DISCIPLINA, CARGA_HORARIA, PROFESSOR_RESPONSAVEL_ID)
+VALUES ('História', 60, 3); -- Ricardo Almeida (ID 3)
+INSERT INTO DISCIPLINAS (NOME_DISCIPLINA, CARGA_HORARIA, PROFESSOR_RESPONSAVEL_ID)
+VALUES ('Ciências', 75, 4); -- Mariana Lima (ID 4)
+INSERT INTO DISCIPLINAS (NOME_DISCIPLINA, CARGA_HORARIA, PROFESSOR_RESPONSAVEL_ID)
+VALUES ('Geografia', 60, NULL); -- Sem professor responsável ainda (ID 5)
+INSERT INTO DISCIPLINAS (NOME_DISCIPLINA, CARGA_HORARIA, PROFESSOR_RESPONSAVEL_ID)
+VALUES ('Física', 90, 1); -- Carlos Souza (ID 6)
+
+
+-- Inserção de dados na tabela TURMAS
+INSERT INTO TURMAS (ANO_LETIVO, SERIE, TURNO, PROFESSOR_ID, NUMERO_ALUNOS)
+VALUES (2025, '1º Ano', 'M', 1, 25); -- Professor Carlos Souza (Matemática) - ID 1
+INSERT INTO TURMAS (ANO_LETIVO, SERIE, TURNO, PROFESSOR_ID, NUMERO_ALUNOS)
+VALUES (2025, '2º Ano', 'T', 2, 30); -- Professor Ana Costa (Português) - ID 2
+INSERT INTO TURMAS (ANO_LETIVO, SERIE, TURNO, PROFESSOR_ID, NUMERO_ALUNOS)
+VALUES (2025, '3º Ano', 'N', 3, 28); -- Professor Ricardo Almeida (História) - ID 3
+INSERT INTO TURMAS (ANO_LETIVO, SERIE, TURNO, PROFESSOR_ID, NUMERO_ALUNOS)
+VALUES (2025, '1º Ano', 'T', 4, 22); -- Professor Mariana Lima (Ciências) - ID 4
+INSERT INTO TURMAS (ANO_LETIVO, SERIE, TURNO, PROFESSOR_ID, NUMERO_ALUNOS)
+VALUES (2025, '2º Ano', 'M', 1, 27); -- Professor Carlos Souza (Matemática) - ID 5
+INSERT INTO TURMAS (ANO_LETIVO, SERIE, TURNO, PROFESSOR_ID, NUMERO_ALUNOS)
+VALUES (2024, '4º Ano', 'M', NULL, 20); -- Turma sem professor atribuído (ID 6)
+
+
+-- Inserção de dados na tabela NOTAS (agora com DISCIPLINA_ID)
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, DISCIPLINA_ID, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (1, 1, 1, 8.5, 7.2, 9.0, 6.8, 7.87); -- João Silva, Turma 1, Matemática (ID 1)
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, DISCIPLINA_ID, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (2, 2, 2, 9.0, 8.5, 7.8, 8.2, 8.37); -- Maria Oliveira, Turma 2, Português (ID 2)
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, DISCIPLINA_ID, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (3, 3, 3, 7.5, 8.0, 7.2, 6.5, 7.30); -- Lucas Pereira, Turma 3, História (ID 3)
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, DISCIPLINA_ID, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (4, 1, 1, 7.0, 6.5, 8.0, 7.5, 7.25); -- Ana Souza, Turma 1, Matemática (ID 1)
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, DISCIPLINA_ID, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (5, 2, 2, 6.0, 7.0, 6.5, 7.2, 6.67); -- Pedro Santos, Turma 2, Português (ID 2)
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, DISCIPLINA_ID, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (1, 4, 4, 9.2, 8.8, 9.5, 9.0, 9.12); -- João Silva, Turma 4, Ciências (ID 4)
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, DISCIPLINA_ID, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (3, 5, 1, 6.0, 5.5, 7.0, 6.5, 6.25); -- Lucas Pereira, Turma 5, Matemática (ID 1)
+INSERT INTO NOTAS (ALUNO_ID, TURMA_ID, DISCIPLINA_ID, NOTA_1, NOTA_2, NOTA_3, NOTA_4, MEDIA_FINAL)
+VALUES (5, 6, NULL, 7.0, 7.0, 7.0, 7.0, 7.00); -- Pedro Santos, Turma 6, Disciplina NULL (para testes de JOIN)
+
+
+-- Inserção de dados na tabela MATRICULAS_DISCIPLINAS
+INSERT INTO MATRICULAS_DISCIPLINAS (ALUNO_ID, DISCIPLINA_ID, DATA_MATRICULA)
+VALUES (1, 1, TO_DATE('2024-02-15', 'YYYY-MM-DD')); -- João Silva em Matemática
+INSERT INTO MATRICULAS_DISCIPLINAS (ALUNO_ID, DISCIPLINA_ID, DATA_MATRICULA)
+VALUES (1, 4, TO_DATE('2024-02-15', 'YYYY-MM-DD')); -- João Silva em Ciências
+INSERT INTO MATRICULAS_DISCIPLINAS (ALUNO_ID, DISCIPLINA_ID, DATA_MATRICULA)
+VALUES (2, 2, TO_DATE('2024-02-15', 'YYYY-MM-DD')); -- Maria Oliveira em Português
+INSERT INTO MATRICULAS_DISCIPLINAS (ALUNO_ID, DISCIPLINA_ID, DATA_MATRICULA)
+VALUES (3, 3, TO_DATE('2024-02-15', 'YYYY-MM-DD')); -- Lucas Pereira em História
+INSERT INTO MATRICULAS_DISCIPLINAS (ALUNO_ID, DISCIPLINA_ID, DATA_MATRICULA)
+VALUES (4, 1, TO_DATE('2024-02-15', 'YYYY-MM-DD')); -- Ana Souza em Matemática
+INSERT INTO MATRICULAS_DISCIPLINAS (ALUNO_ID, DISCIPLINA_ID, DATA_MATRICULA)
+VALUES (5, 5, TO_DATE('2024-03-01', 'YYYY-MM-DD')); -- Pedro Santos em Geografia
+          </code></pre>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h2>1️⃣ Operadores JOIN <i class="fas fa-link"></i></h2>
+        <blockquote>
+          <p>Os operadores JOIN são usados para combinar linhas de duas ou mais tabelas com base em uma coluna
+            relacionada entre elas.</p>
+        </blockquote>
+        <p>São essenciais para consultar dados que estão distribuídos em diferentes tabelas de um banco de dados
+          relacional.</p>
+        <div class="card">
+          <h3>1.1. <code>INNER JOIN</code></h3>
+          <p>Retorna apenas as linhas que possuem correspondência (valores iguais) em ambas as tabelas.</p>
+          <pre><code class="language-sql">
+-- Listar alunos e as disciplinas em que têm notas
+SELECT
+    A.NOME AS Nome_Aluno,
+    D.NOME_DISCIPLINA AS Disciplina,
+    N.MEDIA_FINAL
+FROM ALUNOS A
+INNER JOIN NOTAS N ON A.ID = N.ALUNO_ID
+INNER JOIN DISCIPLINAS D ON N.DISCIPLINA_ID = D.ID;
+
+-- Resultado (esperado):
+-- NOME_ALUNO     | DISCIPLINA | MEDIA_FINAL
+-- João Silva     | Matemática | 7.87
+-- Maria Oliveira | Português  | 8.37
+-- Lucas Pereira  | História   | 7.30
+-- Ana Souza      | Matemática | 7.25
+-- Pedro Santos   | Português  | 6.67
+-- João Silva     | Ciências   | 9.12
+-- Lucas Pereira  | Matemática | 6.25
+          </code></pre>
+
+          <h3>1.2. <code>LEFT (OUTER) JOIN</code></h3>
+          <p>Retorna todas as linhas da tabela da esquerda (primeira tabela no <code>FROM</code>) e as linhas
+            correspondentes da tabela da direita. Se não houver correspondência na tabela da direita, os
+            valores das colunas da tabela da direita serão <code>NULL</code>.</p>
+          <pre><code class="language-sql">
+-- Listar todos os professores e as turmas que lecionam (incluindo professores sem turmas)
+SELECT
+    P.NOME AS Nome_Professor,
+    T.ANO_LETIVO,
+    T.SERIE,
+    T.TURNO
+FROM PROFESSORES P
+LEFT JOIN TURMAS T ON P.ID = T.PROFESSOR_ID
+ORDER BY P.NOME, T.ANO_LETIVO;
+
+-- Resultado (esperado - observe 'Fernanda Rocha' sem turmas):
+-- NOME_PROFESSOR | ANO_LETIVO | SERIE    | TURNO
+-- Ana Costa      | 2025       | 2º Ano   | T
+-- Carlos Souza   | 2025       | 1º Ano   | M
+-- Carlos Souza   | 2025       | 2º Ano   | M
+-- Fernanda Rocha | NULL       | NULL     | NULL
+-- Mariana Lima   | 2025       | 1º Ano   | T
+-- Ricardo Almeida| 2025       | 3º Ano   | N
+          </code></pre>
+
+          <h3>1.3. <code>RIGHT (OUTER) JOIN</code></h3>
+          <p>Retorna todas as linhas da tabela da direita e as linhas correspondentes da tabela da esquerda.
+            Se não houver correspondência na tabela da esquerda, os valores das colunas da tabela da esquerda serão
+            <code>NULL</code>.
+          </p>
+          <pre><code class="language-sql">
+-- Listar todas as turmas e seus professores (incluindo turmas sem professor)
+SELECT
+    P.NOME AS Nome_Professor,
+    T.ANO_LETIVO,
+    T.SERIE,
+    T.TURNO
+FROM PROFESSORES P
+RIGHT JOIN TURMAS T ON P.ID = T.PROFESSOR_ID
+ORDER BY T.ANO_LETIVO, T.SERIE;
+
+-- Resultado (esperado - observe a turma '4º Ano' sem professor):
+-- NOME_PROFESSOR | ANO_LETIVO | SERIE    | TURNO
+-- NULL           | 2024       | 4º Ano   | M
+-- Carlos Souza   | 2025       | 1º Ano   | M
+-- Mariana Lima   | 2025       | 1º Ano   | T
+-- Ana Costa      | 2025       | 2º Ano   | T
+-- Carlos Souza   | 2025       | 2º Ano   | M
+-- Ricardo Almeida| 2025       | 3º Ano   | N
+          </code></pre>
+
+          <h3>1.4. <code>FULL (OUTER) JOIN</code></h3>
+          <p>Retorna todas as linhas quando há uma correspondência em uma das tabelas. É a combinação de
+            <code>LEFT JOIN</code> e <code>RIGHT JOIN</code>. Se não houver correspondência, os valores das
+            colunas da tabela sem correspondência serão <code>NULL</code>.
+          </p>
+          <pre><code class="language-sql">
+-- Listar todos os professores e todas as turmas, mostrando correspondências e não correspondências
+SELECT
+    P.NOME AS Nome_Professor,
+    T.ANO_LETIVO,
+    T.SERIE,
+    T.TURNO
+FROM PROFESSORES P
+FULL OUTER JOIN TURMAS T ON P.ID = T.PROFESSOR_ID
+ORDER BY P.NOME, T.ANO_LETIVO;
+
+-- Resultado (esperado - combina os resultados do LEFT e RIGHT JOIN):
+-- NOME_PROFESSOR | ANO_LETIVO | SERIE    | TURNO
+-- Ana Costa      | 2025       | 2º Ano   | T
+-- Carlos Souza   | 2025       | 1º Ano   | M
+-- Carlos Souza   | 2025       | 2º Ano   | M
+-- Fernanda Rocha | NULL       | NULL     | NULL
+-- Mariana Lima   | 2025       | 1º Ano   | T
+-- NULL           | 2024       | 4º Ano   | M
+-- Ricardo Almeida| 2025       | 3º Ano   | N
+          </code></pre>
+
+          <h3>1.5. <code>CROSS JOIN</code> (Produto Cartesiano)</h3>
+          <p>Retorna o produto cartesiano das linhas das tabelas no join. Isso significa que cada linha da
+            primeira tabela é combinada com cada linha da segunda tabela. Raramente usado explicitamente, mas pode
+            ocorrer se você esquecer a condição `ON` em um `INNER JOIN` em alguns bancos de dados.</p>
+          <pre><code class="language-sql">
+-- Combinar cada aluno com cada disciplina (útil para gerar combinações possíveis, por exemplo)
+SELECT
+    A.NOME AS Nome_Aluno,
+    D.NOME_DISCIPLINA AS Nome_Disciplina
+FROM ALUNOS A
+CROSS JOIN DISCIPLINAS D
+ORDER BY A.NOME, D.NOME_DISCIPLINA;
+
+-- Resultado (exemplo - cada aluno com cada disciplina):
+-- NOME_ALUNO     | NOME_DISCIPLINA
+-- Ana Souza      | Ciências
+-- Ana Souza      | Física
+-- Ana Souza      | Geografia
+-- Ana Souza      | História
+-- Ana Souza      | Matemática
+-- Ana Souza      | Português
+-- ... e assim por diante para todos os alunos e disciplinas.
+          </code></pre>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h2>2️⃣ Operadores de Conjunto <i class="fas fa-code-branch"></i></h2>
+        <blockquote>
+          <p>Os operadores de conjunto são usados para combinar os resultados de duas ou mais instruções
+            <code>SELECT</code>. As consultas devem ter o mesmo número de colunas e os tipos de dados das
+            colunas correspondentes devem ser compatíveis.
+          </p>
+        </blockquote>
+        <div class="card">
+          <h3>2.1. <code>UNION</code></h3>
+          <p>Combina os resultados de duas ou mais consultas <code>SELECT</code> e remove as linhas
+            duplicadas. Retorna apenas os valores distintos.</p>
+          <pre><code class="language-sql">
+-- Listar todos os nomes de alunos e professores, sem duplicatas
+SELECT NOME FROM ALUNOS
+UNION
+SELECT NOME FROM PROFESSORES
+ORDER BY NOME;
+
+-- Resultado (esperado):
+-- NOME
+-- Ana Costa
+-- Ana Souza
+-- Carlos Souza
+-- Fernanda Rocha
+-- João Silva
+-- Lucas Pereira
+-- Mariana Lima
+-- Maria Oliveira
+-- Pedro Santos
+-- Ricardo Almeida
+          </code></pre>
+
+          <h3>2.2. <code>UNION ALL</code></h3>
+          <p>Combina os resultados de duas ou mais consultas <code>SELECT</code> e inclui todas as linhas,
+            incluindo as duplicadas.</p>
+          <pre><code class="language-sql">
+-- Listar todos os nomes de alunos e professores, incluindo duplicatas (se houver)
+SELECT NOME FROM ALUNOS
+UNION ALL
+SELECT NOME FROM PROFESSORES
+ORDER BY NOME;
+
+-- Resultado (esperado - neste caso, sem nomes duplicados entre alunos e professores, o resultado é o mesmo do UNION):
+-- NOME
+-- Ana Costa
+-- Ana Souza
+-- Carlos Souza
+-- Fernanda Rocha
+-- João Silva
+-- João Silva
+-- Lucas Pereira
+-- Mariana Lima
+-- Maria Oliveira
+-- Pedro Santos
+-- Ricardo Almeida
+          </code></pre>
+
+          <h3>2.3. <code>INTERSECT</code></h3>
+          <p>Retorna apenas as linhas que são comuns a ambos os conjuntos de resultados das consultas
+            <code>SELECT</code> (linhas que aparecem em ambas).
+          </p>
+          <pre><code class="language-sql">
+-- Encontrar nomes que aparecem tanto em ALUNOS quanto em PROFESSORES (se houver)
+SELECT NOME FROM ALUNOS
+INTERSECT
+SELECT NOME FROM PROFESSORES;
+
+-- Resultado (esperado - com os dados fornecidos, não há nomes em comum):
+-- NOME
+-- (nenhum resultado)
+          </code></pre>
+
+          <h3>2.4. <code>MINUS</code> (ou <code>EXCEPT</code> em outros SQLs)</h3>
+          <p>Retorna as linhas do primeiro conjunto de resultados que não existem no segundo conjunto de
+            resultados.</p>
+          <pre><code class="language-sql">
+-- Listar nomes de alunos que NÃO são também nomes de professores
+SELECT NOME FROM ALUNOS
+MINUS
+SELECT NOME FROM PROFESSORES
+ORDER BY NOME;
+
+-- Resultado (esperado):
+-- NOME
+-- Ana Souza
+-- João Silva
+-- Lucas Pereira
+-- Maria Oliveira
+-- Pedro Santos
+          </code></pre>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h2>3️⃣ Self-Join <i class="fas fa-users-cog"></i></h2>
+        <blockquote>
+          <p>Um Self-Join é uma junção de uma tabela consigo mesma. É usado para comparar linhas dentro da
+            mesma tabela.
+          </p>
+        </blockquote>
+        <p>Geralmente, isso é feito atribuindo-se aliases diferentes para a mesma tabela na cláusula
+          <code>FROM</code>.
+        </p>
+        <div class="card">
+          <h3>Exemplo: Encontrar pares de alunos que nasceram no mesmo dia</h3>
+          <pre><code class="language-sql">
+-- Tabela ALUNOS (definida acima)
+-- Exemplo de dados:
+-- ID | NOME           | DATA_NASCIMENTO
+-- 1  | João Silva     | 2005-03-15
+-- 2  | Maria Oliveira | 2004-07-21
+-- 3  | Lucas Pereira  | 2006-12-10
+-- 4  | Ana Souza      | 2005-01-20
+-- 5  | Pedro Santos   | 2007-09-05
+
+SELECT
+    A1.NOME AS Aluno1,
+    A2.NOME AS Aluno2,
+    A1.DATA_NASCIMENTO
+FROM
+    ALUNOS A1
+JOIN
+    ALUNOS A2 ON A1.DATA_NASCIMENTO = A2.DATA_NASCIMENTO AND A1.ID < A2.ID;
+    -- A1.ID < A2.ID para evitar duplicações e auto-comparação
+
+-- Resultado (esperado - com os dados fornecidos, nenhum aluno nasceu na mesma data):
+-- ALUNO1 | ALUNO2 | DATA_NASCIMENTO
+-- (nenhum resultado)
+-- Se houvesse alunos com a mesma data de nascimento, eles apareceriam aqui.
+          </code></pre>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <h2>Exercícios e Desafios <i class="fas fa-question-circle"></i></h2>
+        <p>Para solidificar seu aprendizado, tente resolver os seguintes desafios:</p>
+        <div class="card">
+          <ol class="padding-r-10">
+            <li>
+              <p><strong>Professores e suas Disciplinas:</strong></p>
+              <p>Liste todos os professores e as disciplinas que são responsáveis. Inclua professores que não são
+                responsáveis por nenhuma disciplina.</p>
+              <button onclick="toggleAnswer('ansEx1')">Mostrar Gabarito</button>
+              <div class="answer" id="ansEx1">
+                <pre><code class="language-sql">
+SELECT
+    P.NOME AS Nome_Professor,
+    D.NOME_DISCIPLINA AS Disciplina_Responsavel
+FROM PROFESSORES P
+LEFT JOIN DISCIPLINAS D ON P.ID = D.PROFESSOR_RESPONSAVEL_ID
+ORDER BY P.NOME, D.NOME_DISCIPLINA;
+                </code></pre>
+              </div>
+            </li>
+            <li>
+              <p><strong>Alunos e suas Matrículas em Disciplinas:</strong></p>
+              <p>Mostre o nome de todos os alunos e, para cada um, as disciplinas em que estão matriculados. Se um aluno
+                não estiver matriculado em nenhuma disciplina na tabela `MATRICULAS_DISCIPLINAS`, ele ainda deve
+                aparecer na lista.</p>
+              <button onclick="toggleAnswer('ansEx2')">Mostrar Gabarito</button>
+              <div class="answer" id="ansEx2">
+                <pre><code class="language-sql">
+SELECT
+    A.NOME AS Nome_Aluno,
+    D.NOME_DISCIPLINA AS Disciplina_Matriculada,
+    MD.DATA_MATRICULA
+FROM ALUNOS A
+LEFT JOIN MATRICULAS_DISCIPLINAS MD ON A.ID = MD.ALUNO_ID
+LEFT JOIN DISCIPLINAS D ON MD.DISCIPLINA_ID = D.ID
+ORDER BY A.NOME, D.NOME_DISCIPLINA;
+                </code></pre>
+              </div>
+            </li>
+            <li>
+              <p><strong>Turmas sem Professor Atribuído:</strong></p>
+              <p>Liste todas as turmas que não possuem um professor atribuído.</p>
+              <button onclick="toggleAnswer('ansEx3')">Mostrar Gabarito</button>
+              <div class="answer" id="ansEx3">
+                <pre><code class="language-sql">
+SELECT
+    ANO_LETIVO,
+    SERIE,
+    TURNO
+FROM TURMAS
+WHERE PROFESSOR_ID IS NULL;
+                </code></pre>
+              </div>
+            </li>
+            <li>
+              <p><strong>Disciplinas sem Alunos Matriculados:</strong></p>
+              <p>Encontre todas as disciplinas que não têm nenhum aluno matriculado nelas.</p>
+              <button onclick="toggleAnswer('ansEx4')">Mostrar Gabarito</button>
+              <div class="answer" id="ansEx4">
+                <pre><code class="language-sql">
+SELECT
+    D.NOME_DISCIPLINA
+FROM DISCIPLINAS D
+LEFT JOIN MATRICULAS_DISCIPLINAS MD ON D.ID = MD.DISCIPLINA_ID
+WHERE MD.ALUNO_ID IS NULL;
+                </code></code-pre>
+              </div>
+            </li>
+            <li>
+              <p><strong>Alunos com a Mesma Data de Matrícula:</strong></p>
+              <p>Encontre pares de alunos que se matricularam na mesma data. Certifique-se de que cada par apareça apenas uma vez e que um aluno não seja comparado consigo mesmo.</p>
+              <button onclick="toggleAnswer('ansEx5')">Mostrar Gabarito</button>
+              <div class="answer" id="ansEx5">
+                <pre><code class="language-sql">
+SELECT
+    A1.NOME AS Aluno1,
+    A2.NOME AS Aluno2,
+    A1.DATA_MATRIICULA AS Data_Matricula_Comum
+FROM
+    ALUNOS A1
+JOIN
+    ALUNOS A2 ON A1.DATA_MATRIICULA = A2.DATA_MATRIICULA AND A1.ID < A2.ID;
+                </code></pre>
+              </div>
+            </li>
+            <li>
+              <p><strong>Nomes Comuns entre Alunos e Professores (se houver):</strong></p>
+              <p>Liste os nomes que são comuns tanto na tabela `ALUNOS` quanto na tabela `PROFESSORES`.</p>
+              <button onclick="toggleAnswer('ansEx6')">Mostrar Gabarito</button>
+              <div class="answer" id="ansEx6">
+                <pre><code class="language-sql">
+SELECT NOME FROM ALUNOS
+INTERSECT
+SELECT NOME FROM PROFESSORES;
+                </code></pre>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Function to load the menu
+      function loadMenu() {
+        fetch('/menu.html')
+          .then(response => response.text())
+          .then(data => {
+            document.getElementById('menu-placeholder').innerHTML = data;
+            initializeSidebar(); // Initialize sidebar functionality after loading menu
+          })
+          .catch(error => console.error('Error loading menu:', error));
+      }
+      function initializeSidebar() {
+        const hamburgerMenu = document.getElementById('hamburger-menu');
+        const sidebar = document.getElementById('sidebar');
+        const content = document.getElementById('content');
+        const overlay = document.getElementById('overlay');
+        const sidebarLinks = sidebar.querySelectorAll('a');
+
+        function toggleSidebar() {
+          sidebar.classList.toggle('active');
+          content.classList.toggle('sidebar-active');
+          overlay.classList.toggle('active');
+        }
+
+        hamburgerMenu.addEventListener('click', toggleSidebar);
+        overlay.addEventListener('click', toggleSidebar);
+
+        sidebarLinks.forEach(link => {
+          link.addEventListener('click', function () {
+            if (sidebar.classList.contains('active')) {
+              toggleSidebar();
+            }
+          });
+        });
+
+        function highlightActiveLink() {
+          const currentPath = window.location.pathname.split('/').pop();
+          sidebarLinks.forEach(link => {
+            const linkPath = link.getAttribute('href');
+            if (linkPath === currentPath || (currentPath === '' && linkPath === 'index.html')) {
+              link.classList.add('active');
+            } else {
+              link.classList.remove('active');
+            }
+          });
+        }
+
+        highlightActiveLink();
+      }
+
+      // Load the menu when the DOM is ready
+      loadMenu();
+
+      window.toggleAnswer = function (id) {
+        var x = document.getElementById(id);
+        if (x.style.display === "none" || x.style.display === "") {
+          x.style.display = "block";
+        } else {
+          x.style.display = "none";
+        }
+      };
+    });
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+</body>
+
+</html>

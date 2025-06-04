@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PL/SQL - Portal de Estudos</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+</head>
+
+<body>
+  <div id="menu-placeholder"></div>
+
+  <div class="content" id="content">
+    <header>
+      <h1>Bem-vindo ao Portal de Estudos de PL/SQL</h1>
+      <p>Aqui você encontrará um guia completo, do básico ao avançado, sobre SQL e PL/SQL no ambiente Oracle. Prepare-se
+        para dominar a manipulação e programação de bancos de dados!</p>
+    </header>
+
+    <div class="section">
+      <h2>O que você vai aprender:</h2>
+      <ul>
+        <li>Fundamentos de SQL: DDL, DML, DQL</li>
+        <li>Consultas avançadas, Joins, Funções de Agregação e Subconsultas</li>
+        <li>Técnicas de otimização de queries</li>
+        <li>Programação PL/SQL: Procedures, Functions, Triggers</li>
+        <li>Conceitos avançados de PL/SQL: Pacotes, tratamento de exceções</li>
+        <li>Melhores práticas e dicas para o dia a dia.</li>
+      </ul>
+      <p>Navegue pelo menu ao lado para explorar os tópicos e aprimorar seus conhecimentos com exemplos práticos e
+        desafios.</p>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Função para carregar o menu
+      function loadMenu() {
+        // IMPORTANT: Verifique o caminho para menu.html
+        // Se menu.html estiver na mesma pasta que index.html, use 'menu.html'
+        // Se menu.html estiver dentro de uma pasta 'menu' (ex: 'menu/menu.html'), use '/menu/menu.html'
+        fetch('/menu.html') // <--- VERIFIQUE ESTE CAMINHO!
+          .then(response => response.text())
+          .then(data => {
+            document.getElementById('menu-placeholder').innerHTML = data;
+            initializeSidebar(); // Inicializa a funcionalidade da sidebar APÓS carregar o menu
+          })
+          .catch(error => console.error('Erro ao carregar o menu:', error));
+      }
+
+      function initializeSidebar() {
+        const hamburgerMenu = document.getElementById('hamburger-menu');
+        const sidebar = document.getElementById('sidebar');
+        const content = document.getElementById('content');
+        const overlay = document.getElementById('overlay');
+        const sidebarLinks = sidebar.querySelectorAll('a');
+
+        function toggleSidebar() {
+          sidebar.classList.toggle('active');
+          content.classList.toggle('sidebar-active');
+          overlay.classList.toggle('active');
+        }
+
+        hamburgerMenu.addEventListener('click', toggleSidebar);
+        overlay.addEventListener('click', toggleSidebar);
+
+        sidebarLinks.forEach(link => {
+          link.addEventListener('click', function () {
+            if (sidebar.classList.contains('active')) {
+              toggleSidebar();
+            }
+          });
+        });
+
+        // **Função aprimorada e com DEBUG para destacar o link ativo**
+        function highlightActiveLink() {
+          const currentURL = window.location.href;
+          const currentPathname = window.location.pathname; // Ex: "/", "/index.html", "/pasta/pagina.html"
+
+          // === DEBUG START ===
+          console.log('--- DEBUG DO MENU ---');
+          console.log('URL atual (href):', currentURL);
+          console.log('Caminho atual (pathname):', currentPathname);
+          // === DEBUG END ===
+
+          // Remove a classe 'active' de todos os links primeiro
+          sidebarLinks.forEach(link => {
+            link.classList.remove('active');
+          });
+
+          // Itera sobre todos os links da sidebar
+          sidebarLinks.forEach(link => {
+            const linkHref = link.getAttribute('href'); // Ex: "index.html", "Conceitos BD.html"
+
+            // === DEBUG START ===
+            console.log('  Link no menu:', linkHref);
+            // === DEBUG END ===
+
+            // Lógica para marcar o link ativo
+            // Caso 1: Página inicial (index.html)
+            // A URL pode terminar em '/' ou '/index.html'
+            const isIndexPage = (currentPathname === '/' || currentPathname.endsWith('/index.html'));
+
+            // O link no menu deve ser 'index.html'
+            const isIndexLink = (linkHref === 'index.html');
+
+            if (isIndexPage && isIndexLink) {
+              link.classList.add('active');
+              // === DEBUG START ===
+              console.log('  MARCADO: Início (página inicial)');
+              // === DEBUG END ===
+            }
+            // Caso 2: Outras páginas (que não são a inicial)
+            // Compara o nome do arquivo da URL atual com o href do link do menu
+            else if (currentPathname.endsWith(linkHref) || decodeURIComponent(currentPathname).endsWith(linkHref)) {
+              link.classList.add('active');
+              // === DEBUG START ===
+              console.log('  MARCADO:', linkHref);
+              // === DEBUG END ===
+            }
+          });
+          // === DEBUG START ===
+          console.log('--- FIM DO DEBUG DO MENU ---');
+          // === DEBUG END ===
+        }
+
+        highlightActiveLink(); // Chama a função ao inicializar a sidebar
+      }
+
+      // Carrega o menu quando o DOM estiver pronto
+      loadMenu();
+
+      // Função para mostrar/esconder o gabarito (mantida para consistência)
+      window.toggleAnswer = function (id) {
+        var x = document.getElementById(id);
+        if (x.style.display === "none" || x.style.display === "") {
+          x.style.display = "block";
+        } else {
+          x.style.display = "none";
+        }
+      };
+    });
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+</body>
+
+</html>

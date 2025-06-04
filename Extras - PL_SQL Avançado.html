@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Extras - PL/SQL Avançado</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+</head>
+
+<body>
+  <div id="menu-placeholder"></div>
+
+  <div class="content" id="content">
+    <header>
+      <h1>Extras - PL/SQL Avançado</h1>
+      <p>Explore recursos mais avançados do PL/SQL para otimizar, flexibilizar e organizar seu código.</p>
+    </header>
+
+    <div class="main-section">
+
+      <div class="sub-section">
+        <h2>1️⃣ Coleções (Collections) <i class="fas fa-layer-group"></i></h2>
+        <blockquote>
+          <p>Coleções PL/SQL são tipos de dados que armazenam uma coleção de elementos do mesmo tipo. Elas são análogas
+            a arrays em outras linguagens de programação e são fundamentais para o processamento em massa e manipulação
+            de dados complexos em memória.</p>
+        </blockquote>
+        <div class="card">
+          <h3>Tipos de Coleções:</h3>
+          <ul>
+            <li>
+              <strong><code>VARRAY</code> (Varying-size Array):</strong>
+              <ul>
+                <li>Tamanho fixo definido no momento da criação (ou limitado por um tamanho máximo).</li>
+                <li>Sempre denso (elementos contíguos).</li>
+                <li>Pode ser armazenado como uma coluna em uma tabela Oracle.</li>
+              </ul>
+              <pre><code class="language-sql">
+-- Declaração do tipo VARRAY em nível de schema
+CREATE OR REPLACE TYPE TIPO_NOTAS_ALUNO IS VARRAY(5) OF NUMBER(4,2);
+/
+
+-- Uso em PL/SQL
+DECLARE
+  v_minhas_notas TIPO_NOTAS_ALUNO;
+BEGIN
+  v_minhas_notas := TIPO_NOTAS_ALUNO(8.5, 7.0, 9.2, 6.0); -- Inicializa com 4 elementos
+  -- v_minhas_notas(5) := 10.0; -- Você pode adicionar até o limite de 5
+
+  DBMS_OUTPUT.PUT_LINE('Primeira nota: ' || v_minhas_notas(1));
+  DBMS_OUTPUT.PUT_LINE('Número de notas: ' || v_minhas_notas.COUNT);
+END;
+/
+              </code></pre>
+            </li>
+            <li>
+              <strong><code>NESTED TABLE</code> (Tabela Aninhada):</strong>
+              <ul>
+                <li>Tamanho variável, pode crescer dinamicamente.</li>
+                <li>Pode ser esparsa (elementos não contíguos) após exclusões, mas densificada por `TRIM` ou
+                  `DELETE(n,m)`.</li>
+                <li>Pode ser armazenada como uma coluna em uma tabela Oracle.</li>
+              </ul>
+              <pre><code class="language-sql">
+-- Declaração do tipo NESTED TABLE em nível de schema
+CREATE OR REPLACE TYPE TIPO_TELEFONES IS TABLE OF VARCHAR2(15);
+/
+
+-- Uso em PL/SQL
+DECLARE
+  v_telefones TIPO_TELEFONES;
+BEGIN
+  v_telefones := TIPO_TELEFONES(); -- Inicializa a coleção vazia
+  v_telefones.EXTEND(2); -- Adiciona dois elementos nulos
+  v_telefones(1) := '11987654321';
+  v_telefones(2) := '2134567890';
+
+  v_telefones.EXTEND; -- Adiciona mais um elemento
+  v_telefones(3) := '81912345678';
+
+  DBMS_OUTPUT.PUT_LINE('Telefone 2: ' || v_telefones(2));
+  v_telefones.DELETE(1); -- Remove o primeiro elemento, tornando a coleção esparsa
+  DBMS_OUTPUT.PUT_LINE('Após DELETE, COUNT: ' || v_telefones.COUNT); -- COUNT ainda inclui o elemento deletado
+  -- Para iterar, você precisaria de um loop com EXISTS:
+  FOR i IN v_telefones.FIRST..v_telefones.LAST LOOP
+    IF v_telefones.EXISTS(i) THEN
+      DBMS_OUTPUT.PUT_LINE('Telefone na posição ' || i || ': ' || v_telefones(i));
+    END IF;
+  END LOOP;
+END;
+/
+              </code></pre>
+            </li>
+            <li>
+              <strong><code>ASSOCIATIVE ARRAY</code> (Tabela PL/SQL ou Index-by Table):</strong>
+              <ul>
+                <li>Mais flexível, indexada por <code>NUMBER</code> ou <code>VARCHAR2</code>.</li>
+                <li>Não pode ser armazenada como coluna de tabela, existe apenas em memória PL/SQL.</li>
+                <li>Ideal para lookup tables e grandes conjuntos de dados temporários.</li>
+              </ul>
+              <pre><code class="language-sql">
+-- Declaração do tipo ASSOCIATIVE ARRAY (somente em blocos PL/SQL ou pacotes)
+DECLARE
+  TYPE t_map_cidades IS TABLE OF ALUNOS.NOME%TYPE INDEX BY ALUNOS.CIDADE%TYPE;
+  v_alunos_por_cidade t_map_cidades;
+BEGIN
+  v_alunos_por_cidade('Recife') := 'João Silva';
+  v_alunos_por_cidade('São Paulo') := 'Maria Souza';
+  v_alunos_por_cidade('Recife') := 'Pedro Santos'; -- Sobrescreve o anterior para 'Recife'
+
+  DBMS_OUTPUT.PUT_LINE('Aluno em Recife: ' || v_alunos_por_cidade('Recife'));
+  DBMS_OUTPUT.PUT_LINE('Aluno em São Paulo: ' || v_alunos_por_cidade('São Paulo'));
+
+  -- Iterando sobre uma Associative Array
+  DECLARE
+    v_cidade VARCHAR2(100);
+  BEGIN
+    v_cidade := v_alunos_por_cidade.FIRST;
+    WHILE v_cidade IS NOT NULL LOOP
+      DBMS_OUTPUT.PUT_LINE('Cidade: ' || v_cidade || ', Aluno: ' || v_alunos_por_cidade(v_cidade));
+      v_cidade := v_alunos_por_cidade.NEXT(v_cidade);
+    END LOOP;
+  END;
+END;
+/
+              </code></pre>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h2>2️⃣ Ref Cursors <i class="fas fa-arrows-alt-h"></i></h2>
+        <blockquote>
+          <p><code>REF CURSOR</code> é um tipo de dados PL/SQL que representa um ponteiro para um resultado de consulta
+            (um conjunto de linhas). Eles são extremamente úteis para retornar conjuntos de resultados de procedures e
+            functions para aplicações cliente ou outros blocos PL/SQL, oferecendo flexibilidade e desempenho.</p>
+        </blockquote>
+        <div class="card">
+          <h3>Tipos de Ref Cursors:</h3>
+          <ul>
+            <li>
+              <strong>Strongly Typed (Cursor Forte):</strong>
+              <ul>
+                <li>O tipo de retorno da consulta é definido rigidamente na declaração.</li>
+                <li>Ex: `TYPE T_ALUNOS_RC IS REF CURSOR RETURN ALUNOS%ROWTYPE;`</li>
+                <li>Vantagem: Erros de tipo são detectados em tempo de compilação.</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Weakly Typed (Cursor Fraco):</strong>
+              <ul>
+                <li>O tipo de retorno da consulta não é definido na declaração (mais genérico).</li>
+                <li>Ex: `TYPE T_GENERIC_RC IS REF CURSOR;` ou simplesmente `SYS_REFCURSOR` (pré-definido pelo Oracle).
+                </li>
+                <li>Vantagem: Mais flexível, pode ser usado para retornar resultados de consultas diferentes.</li>
+                <li>Desvantagem: Erros de tipo só são detectados em tempo de execução.</li>
+              </ul>
+            </li>
+          </ul>
+          <h3>Exemplo de Uso (Weakly Typed com `SYS_REFCURSOR`):</h3>
+          <p>Retornando um cursor de uma procedure para uma aplicação cliente ou outro bloco PL/SQL.</p>
+          <pre><code class="language-sql">
+-- Procedure que retorna um REF CURSOR
+CREATE OR REPLACE PROCEDURE GET_ALUNOS_POR_STATUS (
+  p_status IN ALUNOS.STATUS_MATRICULA%TYPE,
+  p_alunos_cursor OUT SYS_REFCURSOR -- Retorna um cursor fraco
+)
+IS
+BEGIN
+  OPEN p_alunos_cursor FOR
+    SELECT ID, NOME, EMAIL, STATUS_MATRICULA
+    FROM ALUNOS
+    WHERE STATUS_MATRICULA = p_status
+    ORDER BY NOME;
+END;
+/
+
+-- Como consumir o REF CURSOR em outro bloco PL/SQL:
+SET SERVEROUTPUT ON;
+DECLARE
+  v_alunos_cursor SYS_REFCURSOR;
+  v_aluno_id ALUNOS.ID%TYPE;
+  v_nome ALUNOS.NOME%TYPE;
+  v_email ALUNOS.EMAIL%TYPE;
+  v_status ALUNOS.STATUS_MATRICULA%TYPE;
+BEGIN
+  GET_ALUNOS_POR_STATUS('Ativo', v_alunos_cursor);
+
+  LOOP
+    FETCH v_alunos_cursor INTO v_aluno_id, v_nome, v_email, v_status;
+    EXIT WHEN v_alunos_cursor%NOTFOUND;
+    DBMS_OUTPUT.PUT_LINE('ID: ' || v_aluno_id || ', Nome: ' || v_nome || ', Email: ' || v_email || ', Status: ' || v_status);
+  END LOOP;
+
+  CLOSE v_alunos_cursor;
+EXCEPTION
+  WHEN OTHERS THEN
+    IF v_alunos_cursor%ISOPEN THEN
+      CLOSE v_alunos_cursor;
+    END IF;
+    DBMS_OUTPUT.PUT_LINE('Erro: ' || SQLERRM);
+END;
+/
+          </code></pre>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h2>3️⃣ SQL Dinâmico (<code>EXECUTE IMMEDIATE</code>) <i class="fas fa-code-branch"></i></h2>
+        <blockquote>
+          <p>SQL Dinâmico permite que você construa e execute instruções SQL ou PL/SQL em tempo de execução. Isso é útil
+            quando a instrução SQL não pode ser totalmente conhecida em tempo de compilação (ex: nome da tabela ou
+            coluna varia, cláusulas <code>WHERE</code> opcionais).</p>
+        </blockquote>
+        <div class="card">
+          <h3>Quando Usar:</h3>
+          <ul>
+            <li>Quando o nome da tabela, nome da coluna, ou outras partes da estrutura da query são variáveis.</li>
+            <li>Para construir cláusulas <code>WHERE</code> complexas e opcionais.</li>
+            <li>Para executar DDL (<code>CREATE</code>, <code>ALTER</code>, <code>DROP</code>) dentro de PL/SQL, pois
+              comandos DDL não podem ser executados diretamente.</li>
+          </ul>
+          <h3>Sintaxe Básica:</h3>
+          <pre><code class="language-sql">
+EXECUTE IMMEDIATE string_sql
+[INTO variavel_destino1, variavel_destino2, ...] -- Para SELECT INTO
+[USING parametro_entrada1, parametro_entrada2, ...] -- Para variáveis de bind (IN, IN OUT)
+[RETURNING INTO variavel_retorno1, ...] -- Para DML com cláusula RETURNING
+          </code></pre>
+          <h3>Exemplo:</h3>
+          <p>Atualizando uma coluna específica de uma tabela, onde a coluna e a tabela são passadas como parâmetros.</p>
+          <pre><code class="language-sql">
+CREATE OR REPLACE PROCEDURE ATUALIZAR_DADOS_GENERICOS (
+  p_tabela_nome IN VARCHAR2,
+  p_coluna_update IN VARCHAR2,
+  p_novo_valor IN VARCHAR2,
+  p_coluna_where IN VARCHAR2,
+  p_valor_where IN VARCHAR2
+)
+IS
+  v_sql_dinamico VARCHAR2(4000);
+BEGIN
+  v_sql_dinamico := 'UPDATE ' || p_tabela_nome ||
+                    ' SET ' || p_coluna_update || ' = :novo_valor' ||
+                    ' WHERE ' || p_coluna_where || ' = :valor_where';
+
+  DBMS_OUTPUT.PUT_LINE('Executando: ' || v_sql_dinamico);
+
+  EXECUTE IMMEDIATE v_sql_dinamico
+  USING p_novo_valor, p_valor_where; -- Bind variables para segurança
+
+  COMMIT;
+  DBMS_OUTPUT.PUT_LINE('Atualização concluída.');
+
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+    DBMS_OUTPUT.PUT_LINE('Erro ao executar SQL dinâmico: ' || SQLERRM);
+END;
+/
+
+-- Testando a procedure:
+SET SERVEROUTPUT ON;
+-- Atualizar o email do aluno com ID 1
+EXEC ATUALIZAR_DADOS_GENERICOS('ALUNOS', 'EMAIL', 'novo.email@teste.com', 'ID', '1');
+-- Atualizar o status da turma com nome 'Turma A'
+EXEC ATUALIZAR_DADOS_GENERICOS('TURMAS', 'STATUS', 'Fechada', 'NOME_TURMA', 'Turma A');
+          </code></pre>
+          <h3>Riscos de SQL Injection e Mitigação:</h3>
+          <p>O maior risco do SQL Dinâmico é o SQL Injection, onde um usuário mal-intencionado pode injetar código SQL
+            na string dinâmica, comprometendo a segurança ou integridade dos dados.</p>
+          <p><strong>Mitigação:</strong></p>
+          <ul>
+            <li><strong>Sempre use variáveis de bind (`USING`)</strong> para valores que vêm de entrada do usuário.
+              **Nunca concatene diretamente valores de usuário** que serão usados em cláusulas `WHERE`, `SET` ou
+              `VALUES`.</li>
+            <li>Para nomes de objetos (tabelas, colunas) que precisam ser dinâmicos, valide-os rigorosamente contra
+              listas brancas (whitelist) de nomes permitidos ou use funções como `DBMS_ASSERT` para garantir que são
+              nomes válidos de objetos.</li>
+            <li>Minimize o uso de SQL Dinâmico. Use-o apenas quando estritamente necessário.</li>
+          </ul>
+          <pre><code class="language-sql">
+-- EXEMPLO RUIM (VULNERÁVEL A SQL INJECTION)
+-- NUNCA FAÇA ISSO EM CÓDIGO DE PRODUÇÃO COM ENTRADAS DE USUÁRIO!
+-- p_valor_where := '1 OR 1=1 --';
+-- v_sql_dinamico := 'DELETE FROM ALUNOS WHERE ID = ' || p_valor_where;
+-- EXECUTE IMMEDIATE v_sql_dinamico; -- Isso deletaria todos os alunos!
+
+-- EXEMPLO CORRETO (Usando bind variables)
+-- EXECUTE IMMEDIATE 'DELETE FROM ALUNOS WHERE ID = :id_aluno' USING p_valor_where;
+          </code></pre>
+        </div>
+      </div>
+
+
+      <div class="exercise">
+        <h2>Exercícios e Desafios <i class="fas fa-question-circle"></i></h2>
+        <p>Para solidificar seu aprendizado, tente resolver os seguintes desafios:</p>
+        <div class="card">
+          <ol>
+            <li>
+              Crie um tipo de coleção `NESTED TABLE` chamada `TIPOS_DISCIPLINAS` que armazene strings (nomes de
+              disciplinas). Em um bloco PL/SQL anônimo, declare uma variável desse tipo, adicione algumas disciplinas e,
+              em seguida, itere sobre a coleção exibindo cada disciplina.
+              <button onclick="toggleAnswer('ansEx1')">Mostrar Gabarito</button>
+              <div class="answer" id="ansEx1">
+                <pre><code class="language-sql">
+-- Criar o tipo de coleção em nível de schema
+CREATE OR REPLACE TYPE TIPOS_DISCIPLINAS IS TABLE OF VARCHAR2(100);
+/
+
+-- Bloco PL/SQL para usar a coleção
+DECLARE
+  v_minhas_disciplinas TIPOS_DISCIPLINAS;
+BEGIN
+  v_minhas_disciplinas := TIPOS_DISCIPLINAS('Matemática', 'Português', 'História', 'Ciências');
+
+  DBMS_OUTPUT.PUT_LINE('Minhas Disciplinas:');
+  FOR i IN v_minhas_disciplinas.FIRST..v_minhas_disciplinas.LAST LOOP
+    DBMS_OUTPUT.PUT_LINE('- ' || v_minhas_disciplinas(i));
+  END LOOP;
+
+  -- Exemplo de adição e remoção
+  v_minhas_disciplinas.EXTEND;
+  v_minhas_disciplinas(v_minhas_disciplinas.LAST) := 'Física';
+  DBMS_OUTPUT.PUT_LINE('Adicionado Física. Nova lista:');
+
+  FOR i IN v_minhas_disciplinas.FIRST..v_minhas_disciplinas.LAST LOOP
+    DBMS_OUTPUT.PUT_LINE('- ' || v_minhas_disciplinas(i));
+  END LOOP;
+
+  v_minhas_disciplinas.DELETE(2); -- Remove 'Português'
+  DBMS_OUTPUT.PUT_LINE('Após remover Português (posição 2). Lista (pode ser esparsa):');
+  FOR i IN v_minhas_disciplinas.FIRST..v_minhas_disciplinas.LAST LOOP
+    IF v_minhas_disciplinas.EXISTS(i) THEN
+      DBMS_OUTPUT.PUT_LINE('- ' || v_minhas_disciplinas(i));
+    END IF;
+  END LOOP;
+END;
+/
+                </code></pre>
+              </div>
+            </li>
+            <li>
+              Crie uma função PL/SQL chamada `GET_ALUNOS_COM_NOTA_ACIMA` que receba um valor mínimo de nota como
+              parâmetro (`p_nota_minima`) e retorne um `SYS_REFCURSOR` contendo o `ID`, `NOME` e `NOTA` de todos os
+              alunos que possuem alguma nota maior ou igual a `p_nota_minima`.
+              <button onclick="toggleAnswer('ansEx2')">Mostrar Gabarito</button>
+              <div class="answer" id="ansEx2">
+                <pre><code class="language-sql">
+CREATE OR REPLACE FUNCTION GET_ALUNOS_COM_NOTA_ACIMA (
+  p_nota_minima IN NUMBER
+)
+RETURN SYS_REFCURSOR
+IS
+  v_alunos_cursor SYS_REFCURSOR;
+BEGIN
+  OPEN v_alunos_cursor FOR
+    SELECT A.ID, A.NOME, N.NOTA
+    FROM ALUNOS A
+    JOIN NOTAS N ON A.ID = N.ALUNO_ID
+    WHERE N.NOTA >= p_nota_minima
+    ORDER BY A.NOME, N.NOTA DESC;
+
+  RETURN v_alunos_cursor;
+EXCEPTION
+  WHEN OTHERS THEN
+    IF v_alunos_cursor%ISOPEN THEN
+      CLOSE v_alunos_cursor;
+    END IF;
+    RAISE_APPLICATION_ERROR(-20015, 'Erro ao buscar alunos com nota acima: ' || SQLERRM);
+END;
+/
+
+-- Teste da função em um bloco PL/SQL:
+SET SERVEROUTPUT ON;
+DECLARE
+  v_cursor SYS_REFCURSOR;
+  v_aluno_id ALUNOS.ID%TYPE;
+  v_aluno_nome ALUNOS.NOME%TYPE;
+  v_nota NOTAS.NOTA%TYPE;
+BEGIN
+  v_cursor := GET_ALUNOS_COM_NOTA_ACIMA(7.0);
+
+  DBMS_OUTPUT.PUT_LINE('Alunos com nota maior ou igual a 7.0:');
+  LOOP
+    FETCH v_cursor INTO v_aluno_id, v_aluno_nome, v_nota;
+    EXIT WHEN v_cursor%NOTFOUND;
+    DBMS_OUTPUT.PUT_LINE('ID: ' || v_aluno_id || ', Nome: ' || v_aluno_nome || ', Nota: ' || v_nota);
+  END LOOP;
+  CLOSE v_cursor;
+
+  DBMS_OUTPUT.PUT_LINE('------------------------------------');
+
+  v_cursor := GET_ALUNOS_COM_NOTA_ACIMA(9.0);
+  DBMS_OUTPUT.PUT_LINE('Alunos com nota maior ou igual a 9.0:');
+  LOOP
+    FETCH v_cursor INTO v_aluno_id, v_aluno_nome, v_nota;
+    EXIT WHEN v_cursor%NOTFOUND;
+    DBMS_OUTPUT.PUT_LINE('ID: ' || v_aluno_id || ', Nome: ' || v_aluno_nome || ', Nota: ' || v_nota);
+  END LOOP;
+  CLOSE v_cursor;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Erro capturado no bloco principal: ' || SQLERRM);
+END;
+/
+                </code></pre>
+              </div>
+            </li>
+            <li>
+              Crie uma procedure `CRIAR_TABELA_TEMPORARIA` que receba o nome da tabela como parâmetro
+              (`p_nome_tabela_temp VARCHAR2`) e crie uma tabela temporária (GLOBAL TEMPORARY TABLE) com duas colunas:
+              `ID NUMBER` e `DESCRICAO VARCHAR2(100)`. Use SQL Dinâmico.
+              <button onclick="toggleAnswer('ansEx3')">Mostrar Gabarito</button>
+              <div class="answer" id="ansEx3">
+                <pre><code class="language-sql">
+CREATE OR REPLACE PROCEDURE CRIAR_TABELA_TEMPORARIA (
+  p_nome_tabela_temp IN VARCHAR2
+)
+IS
+  v_sql_ddl VARCHAR2(1000);
+BEGIN
+  -- Construir a string DDL para criar a tabela temporária
+  v_sql_ddl := 'CREATE GLOBAL TEMPORARY TABLE ' || p_nome_tabela_temp || ' (' ||
+               'ID NUMBER, ' ||
+               'DESCRICAO VARCHAR2(100)' ||
+               ') ON COMMIT PRESERVE ROWS'; -- Ou ON COMMIT DELETE ROWS
+
+  DBMS_OUTPUT.PUT_LINE('Executando DDL: ' || v_sql_ddl);
+
+  -- Executar o SQL Dinâmico (DDL não precisa de USING)
+  EXECUTE IMMEDIATE v_sql_ddl;
+
+  DBMS_OUTPUT.PUT_LINE('Tabela temporária ' || p_nome_tabela_temp || ' criada com sucesso.');
+
+EXCEPTION
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Erro ao criar tabela temporária: ' || SQLERRM);
+END;
+/
+
+-- Teste da procedure:
+SET SERVEROUTPUT ON;
+EXEC CRIAR_TABELA_TEMPORARIA('MEUS_DADOS_TEMP');
+-- Para verificar se foi criada (dentro da sua sessão):
+-- SELECT * FROM MEUS_DADOS_TEMP;
+-- DROP TABLE MEUS_DADOS_TEMP; -- Você pode deletar manualmente após o teste
+                </code></pre>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Function to load the menu
+      function loadMenu() {
+        fetch('/menu.html')
+          .then(response => response.text())
+          .then(data => {
+            document.getElementById('menu-placeholder').innerHTML = data;
+            initializeSidebar(); // Initialize sidebar functionality after loading menu
+          })
+          .catch(error => console.error('Error loading menu:', error));
+      }
+
+      function initializeSidebar() {
+        const hamburgerMenu = document.getElementById('hamburger-menu');
+        const sidebar = document.getElementById('sidebar');
+        const content = document.getElementById('content');
+        const overlay = document.getElementById('overlay');
+        const sidebarLinks = sidebar.querySelectorAll('a');
+
+        function toggleSidebar() {
+          sidebar.classList.toggle('active');
+          content.classList.toggle('sidebar-active');
+          overlay.classList.toggle('active');
+        }
+
+        hamburgerMenu.addEventListener('click', toggleSidebar);
+        overlay.addEventListener('click', toggleSidebar);
+
+        sidebarLinks.forEach(link => {
+          link.addEventListener('click', function () {
+            if (sidebar.classList.contains('active')) {
+              toggleSidebar();
+            }
+          });
+        });
+
+        function highlightActiveLink() {
+          const currentPath = window.location.pathname.split('/').pop();
+          sidebarLinks.forEach(link => {
+            const linkPath = link.getAttribute('href');
+            if (linkPath === currentPath || (currentPath === '' && linkPath === 'index.html')) {
+              link.classList.add('active');
+            } else {
+              link.classList.remove('active');
+            }
+          });
+        }
+
+        highlightActiveLink();
+      }
+
+      // Load the menu when the DOM is ready
+      loadMenu();
+
+      window.toggleAnswer = function (id) {
+        var x = document.getElementById(id);
+        if (x.style.display === "none" || x.style.display === "") {
+          x.style.display = "block";
+        } else {
+          x.style.display = "none";
+        }
+      };
+    });
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Programação no Banco de Dados (Objetos Programáticos) - PL/SQL</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+</head>
+
+<body>
+  <div id="menu-placeholder"></div>
+
+  <div class="content" id="content">
+    <header>
+      <h1>Programação no Banco de Dados (Objetos Programáticos)</h1>
+      <p>Aprenda a criar objetos programáticos para estender a lógica de negócio diretamente no Oracle Database.</p>
+    </header>
+
+    <div class="main-section">
+
+      <div class="sub-section">
+        <h2>1️⃣ Exibindo Saída e Tratando Erros: <code>DBMS_OUTPUT.PUT_LINE</code> e
+          <code>RAISE_APPLICATION_ERROR</code> <i class="fas fa-terminal"></i>
+        </h2>
+        <blockquote>
+          <p>Ao programar em PL/SQL, é essencial ter ferramentas para exibir mensagens, depurar o código e lidar com
+            situações de erro. O Oracle fornece pacotes e comandos para isso.</p>
+        </blockquote>
+        <div class="card">
+          <h3>1.1. <code>DBMS_OUTPUT.PUT_LINE</code>: Exibindo Mensagens no Console</h3>
+          <p>O pacote <code>DBMS_OUTPUT</code> (Database Management System Output) é uma ferramenta utilitária no Oracle
+            Database que permite exibir informações textuais diretamente no console ou em uma interface de
+            desenvolvimento (como SQL Developer, SQL*Plus, DBeaver) durante a execução de blocos PL/SQL, procedures,
+            functions ou triggers. A função <code>PUT_LINE</code> é a mais comum e envia uma linha de texto para o
+            buffer de saída.</p>
+
+          <h4>Como Habilitar a Saída:</h4>
+          <p>Antes de usar <code>DBMS_OUTPUT.PUT_LINE</code>, você precisa habilitar o buffer de saída no seu ambiente
+            de SQL. No SQL*Plus ou SQL Developer, use o seguinte comando:</p>
+          <pre><code class="language-sql">
+SET SERVEROUTPUT ON;
+          </code></pre>
+          <p>Este comando habilita a exibição do buffer do `DBMS_OUTPUT` após a execução de um bloco PL/SQL. Você pode
+            especificar o tamanho do buffer, como `SET SERVEROUTPUT ON SIZE 1000000;` para um buffer maior.</p>
+
+          <h4>Sintaxe e Uso:</h4>
+          <pre><code class="language-sql">
+DBMS_OUTPUT.PUT_LINE('Sua mensagem aqui');
+          </code></pre>
+          <p>Você pode concatenar strings e variáveis usando o operador `||`:</p>
+          <pre><code class="language-sql">
+DECLARE
+  v_nome VARCHAR2(50) := 'Alice';
+  v_idade NUMBER := 30;
+BEGIN
+  DBMS_OUTPUT.PUT_LINE('Olá, ' || v_nome || '! Você tem ' || v_idade || ' anos.');
+END;
+/
+          </code></pre>
+
+          <h4>Exemplos Práticos:</h4>
+          <h5>Exemplo 1: Exibindo o resultado de um cálculo</h5>
+          <pre><code class="language-sql">
+SET SERVEROUTPUT ON;
+DECLARE
+  v_num1 NUMBER := 10;
+  v_num2 NUMBER := 5;
+  v_soma NUMBER;
+BEGIN
+  v_soma := v_num1 + v_num2;
+  DBMS_OUTPUT.PUT_LINE('A soma de ' || v_num1 || ' e ' || v_num2 || ' é: ' || v_soma);
+END;
+/
+          </code></pre>
+          <h5>Exemplo 2: Usando para depuração em um bloco anônimo</h5>
+          <pre><code class="language-sql">
+SET SERVEROUTPUT ON;
+DECLARE
+  v_salario NUMBER := 5000;
+  v_bonus NUMBER := 1000;
+  v_salario_total NUMBER;
+BEGIN
+  v_salario_total := v_salario + v_bonus;
+  DBMS_OUTPUT.PUT_LINE('DEBUG: Salário base: ' || v_salario);
+  DBMS_OUTPUT.PUT_LINE('DEBUG: Bônus: ' || v_bonus);
+  DBMS_OUTPUT.PUT_LINE('Salário total: ' || v_salario_total);
+END;
+/
+          </code></pre>
+          <p><code>DBMS_OUTPUT.PUT_LINE</code> é uma ferramenta valiosa para depuração e para fornecer feedback sobre o
+            que um bloco PL/SQL está fazendo, mas não deve ser usado como o principal método de comunicação com a
+            interface do usuário final em aplicações complexas.</p>
+
+          <h3>1.2. <code>RAISE_APPLICATION_ERROR</code>: Levantando Erros Personalizados</h3>
+          <p>Enquanto <code>DBMS_OUTPUT.PUT_LINE</code> é para exibir mensagens informativas ou de depuração,
+            <code>RAISE_APPLICATION_ERROR</code> é usado para levantar (ou "disparar") um erro customizado que pode ser
+            capturado por um bloco <code>EXCEPTION</code> ou que interromperá a execução do código se não for tratado. É
+            a forma padrão de sinalizar uma condição de erro que deve ser tratada pela aplicação chamadora ou que impede
+            a continuação de uma operação.
+          </p>
+          <h4>Sintaxe:</h4>
+          <pre><code class="language-sql">
+RAISE_APPLICATION_ERROR(erro_numero, mensagem_erro);
+          </code></pre>
+          <ul>
+            <li>`erro_numero`: Um número negativo entre -20000 e -20999.</li>
+            <li>`mensagem_erro`: Uma string de até 2048 caracteres com a descrição do erro.</li>
+          </ul>
+          <h4>Exemplo: Impedindo uma operação com erro</h4>
+          <pre><code class="language-sql">
+SET SERVEROUTPUT ON;
+DECLARE
+  v_saldo NUMBER := 100;
+  v_valor_saque NUMBER := 150;
+BEGIN
+  IF v_valor_saque > v_saldo THEN
+    DBMS_OUTPUT.PUT_LINE('Erro: Saldo insuficiente para o saque de ' || v_valor_saque || '. Saldo atual: ' || v_saldo);
+    RAISE_APPLICATION_ERROR(-20001, 'Saldo insuficiente. Saque cancelado.');
+  ELSE
+    v_saldo := v_saldo - v_valor_saque;
+    DBMS_OUTPUT.PUT_LINE('Saque de ' || v_valor_saque || ' realizado com sucesso. Novo saldo: ' || v_saldo);
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Ocorreu um erro tratado: ' || SQLERRM);
+END;
+/
+          </code></pre>
+          <p>A combinação de `DBMS_OUTPUT.PUT_LINE` para depuração e `RAISE_APPLICATION_ERROR` para controle de fluxo de
+            erro é fundamental em PL/SQL.</p>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h2>2️⃣ Procedures (Procedimentos) <i class="fas fa-gears"></i></h2>
+        <blockquote>
+          <p>Procedures são blocos de código PL/SQL nomeados e armazenados no banco de dados. Eles executam uma ação
+            específica e podem aceitar parâmetros de entrada e saída. Não retornam um valor diretamente, mas podem
+            modificar parâmetros <code>OUT</code>.</p>
+        </blockquote>
+        <div class="card">
+          <h3>Sintaxe Básica:</h3>
+          <pre><code class="language-sql">
+CREATE [OR REPLACE] PROCEDURE nome_procedimento (
+  parametro1 IN TIPO_DADO,
+  parametro2 OUT TIPO_DADO,
+  parametro3 IN OUT TIPO_DADO
+)
+IS
+  -- Declarações de variáveis locais
+BEGIN
+  -- Lógica do procedimento
+EXCEPTION
+  -- Tratamento de exceções
+END;
+/
+          </code></pre>
+          <h3>Modos de Parâmetros:</h3>
+          <ul>
+            <li><code>IN</code> (Padrão): O parâmetro é somente leitura dentro do procedimento. Usado para passar
+              valores de entrada.</li>
+            <li><code>OUT</code>: O parâmetro é somente gravação dentro do procedimento. Qualquer valor atribuído a ele
+              no procedimento será retornado para o chamador. O valor inicial é sempre NULL.</li>
+            <li><code>IN OUT</code>: O parâmetro pode ser lido e gravado dentro do procedimento. O valor inicial é
+              passado para o procedimento, e qualquer alteração é retornada para o chamador.</li>
+          </ul>
+          <h3>Exemplo Prático:</h3>
+          <p>Criação de uma procedure para atualizar o email de um aluno e retornar o nome antigo.</p>
+          <pre><code class="language-sql">
+-- Criação da Procedure
+CREATE OR REPLACE PROCEDURE ATUALIZAR_EMAIL_ALUNO (
+  p_aluno_id IN ALUNOS.ID%TYPE,
+  p_novo_email IN ALUNOS.EMAIL%TYPE,
+  p_nome_antigo OUT ALUNOS.NOME%TYPE -- Retorna o nome do aluno antes da atualização
+)
+IS
+  v_nome_temp ALUNOS.NOME%TYPE;
+BEGIN
+  -- Obter o nome antigo antes de atualizar
+  SELECT NOME INTO v_nome_temp
+  FROM ALUNOS
+  WHERE ID = p_aluno_id;
+
+  -- Atualizar o email
+  UPDATE ALUNOS
+  SET EMAIL = p_novo_email
+  WHERE ID = p_aluno_id;
+
+  -- Atribuir o nome antigo ao parâmetro OUT
+  p_nome_antigo := v_nome_temp;
+
+  COMMIT; -- Confirma a transação
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE('Aluno com ID ' || p_aluno_id || ' não encontrado.');
+    ROLLBACK;
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Erro ao atualizar email: ' || SQLERRM);
+    ROLLBACK;
+END;
+/
+
+-- Como chamar a Procedure
+SET SERVEROUTPUT ON;
+DECLARE
+  v_nome_antigo_do_aluno ALUNOS.NOME%TYPE;
+BEGIN
+  ATUALIZAR_EMAIL_ALUNO(1, 'joao.novo@email.com', v_nome_antigo_do_aluno);
+  DBMS_OUTPUT.PUT_LINE('O nome antigo do aluno era: ' || v_nome_antigo_do_aluno);
+END;
+/
+          </code></pre>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h2>3️⃣ Functions (Funções) <i class="fas fa-calculator-alt"></i></h2>
+        <blockquote>
+          <p>Funções são blocos de código PL/SQL nomeados e armazenados no banco de dados, semelhantes a procedures, mas
+            com uma diferença fundamental: **uma função DEVE retornar um valor**. São frequentemente usadas para
+            cálculos e podem ser chamadas em expressões SQL.</p>
+        </blockquote>
+        <div class="card">
+          <h3>Sintaxe Básica:</h3>
+          <pre><code class="language-sql">
+CREATE [OR REPLACE] FUNCTION nome_funcao (
+  parametro1 IN TIPO_DADO,
+  parametro2 IN TIPO_DADO DEFAULT valor_padrao -- Parâmetros de função são sempre IN
+)
+RETURN TIPO_DE_RETORNO
+IS
+  -- Declarações de variáveis locais
+BEGIN
+  -- Lógica da função
+  RETURN valor_a_retornar;
+EXCEPTION
+  -- Tratamento de exceções
+END;
+/
+          </code></pre>
+          <h3>Retornando Múltiplos Valores de uma Função (Abordagens):</h3>
+          <p>Uma função PL/SQL, por definição, pode retornar apenas um único valor através da cláusula `RETURN`. No
+            entanto, existem maneiras de "simular" o retorno de múltiplos valores, que são mais apropriadas para
+            procedures ou para retorno de tipos complexos:</p>
+          <h4>3.1. Usando Parâmetros <code>OUT</code> (Comum em Procedures, Possível em Functions)</h4>
+          <p>Embora mais comum em procedures, uma função pode ter parâmetros <code>OUT</code> além do seu valor de
+            retorno primário. Isso não é uma prática muito comum para "funções puras", que idealmente não teriam efeitos
+            colaterais (como modificar parâmetros OUT), mas é tecnicamente possível.</p>
+          <pre><code class="language-sql">
+CREATE OR REPLACE FUNCTION GET_ALUNO_INFO (
+  p_aluno_id IN ALUNOS.ID%TYPE,
+  p_nome OUT ALUNOS.NOME%TYPE,
+  p_email OUT ALUNOS.EMAIL%TYPE
+)
+RETURN NUMBER -- Retorna o ID do aluno, por exemplo, ou um status code
+IS
+BEGIN
+  SELECT NOME, EMAIL
+  INTO p_nome, p_email
+  FROM ALUNOS
+  WHERE ID = p_aluno_id;
+
+  RETURN p_aluno_id; -- Retorno principal da função
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    p_nome := NULL;
+    p_email := NULL;
+    RETURN -1; -- Indicador de erro ou não encontrado
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Erro na função GET_ALUNO_INFO: ' || SQLERRM);
+    p_nome := NULL;
+    p_email := NULL;
+    RETURN -2; -- Indicador de erro genérico
+END;
+/
+
+-- Como chamar e consumir os múltiplos valores
+SET SERVEROUTPUT ON;
+DECLARE
+  v_nome_aluno ALUNOS.NOME%TYPE;
+  v_email_aluno ALUNOS.EMAIL%TYPE;
+  v_id_retornado NUMBER;
+BEGIN
+  -- Assumindo que ALUNOS é (ID NUMBER PRIMARY KEY, NOME VARCHAR2(100), EMAIL VARCHAR2(100))
+  -- INSERT INTO ALUNOS (ID, NOME, EMAIL) VALUES (1, 'João Silva', 'joao.silva@example.com');
+  -- COMMIT;
+
+  v_id_retornado := GET_ALUNO_INFO(1, v_nome_aluno, v_email_aluno);
+
+  IF v_id_retornado != -1 THEN
+    DBMS_OUTPUT.PUT_LINE('ID Retornado: ' || v_id_retornado);
+    DBMS_OUTPUT.PUT_LINE('Nome do Aluno: ' || v_nome_aluno);
+    DBMS_OUTPUT.PUT_LINE('Email do Aluno: ' || v_email_aluno);
+  ELSE
+    DBMS_OUTPUT.PUT_LINE('Aluno não encontrado!');
+  END IF;
+
+END;
+/
+          </code></pre>
+
+          <h4>3.2. Retornando Tipos Compostos (Records ou Collections)</h4>
+          <p>Para um retorno mais estruturado, uma função pode retornar um tipo composto (como um `RECORD` definido pelo
+            usuário ou uma `COLLECTION` / `TABLE OF`). Esta é a abordagem mais "limpa" para retornar múltiplos valores
+            de uma *função* em PL/SQL.</p>
+          <pre><code class="language-sql">
+-- Primeiro, defina um tipo RECORD
+CREATE OR REPLACE PACKAGE types_pkg IS
+  TYPE t_aluno_record IS RECORD (
+    id ALUNOS.ID%TYPE,
+    nome ALUNOS.NOME%TYPE,
+    email ALUNOS.EMAIL%TYPE
+  );
+END types_pkg;
+/
+
+-- Agora, crie a função que retorna este RECORD
+CREATE OR REPLACE FUNCTION GET_ALUNO_COMPLETO (
+  p_aluno_id IN ALUNOS.ID%TYPE
+)
+RETURN types_pkg.t_aluno_record
+IS
+  v_aluno_info types_pkg.t_aluno_record;
+BEGIN
+  SELECT ID, NOME, EMAIL
+  INTO v_aluno_info.id, v_aluno_info.nome, v_aluno_info.email
+  FROM ALUNOS
+  WHERE ID = p_aluno_id;
+
+  RETURN v_aluno_info;
+
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    -- Retorna um record vazio ou com valores padrão, ou levanta uma exceção
+    DBMS_OUTPUT.PUT_LINE('Aluno com ID ' || p_aluno_id || ' não encontrado.');
+    RETURN NULL; -- Ou inicialize v_aluno_info com NULLs e retorne
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Erro ao obter informações do aluno: ' || SQLERRM);
+    RETURN NULL;
+END;
+/
+
+-- Como chamar e consumir um record retornado por uma função
+SET SERVEROUTPUT ON;
+DECLARE
+  v_dados_aluno types_pkg.t_aluno_record;
+BEGIN
+  -- Supondo que ALUNOS seja (ID NUMBER PRIMARY KEY, NOME VARCHAR2(100), EMAIL VARCHAR2(100))
+  -- INSERT INTO ALUNOS (ID, NOME, EMAIL) VALUES (1, 'João Silva', 'joao.silva@example.com');
+  -- COMMIT;
+
+  v_dados_aluno := GET_ALUNO_COMPLETO(1);
+
+  IF v_dados_aluno.id IS NOT NULL THEN
+    DBMS_OUTPUT.PUT_LINE('ID: ' || v_dados_aluno.id);
+    DBMS_OUTPUT.PUT_LINE('Nome: ' || v_dados_aluno.nome);
+    DBMS_OUTPUT.PUT_LINE('Email: ' || v_dados_aluno.email);
+  ELSE
+    DBMS_OUTPUT.PUT_LINE('Não foi possível obter os dados do aluno.');
+  END IF;
+END;
+/
+          </code></pre>
+
+          <h3>Exemplo Prático (Função com retorno único):</h3>
+          <p>Criação de uma função para calcular a média de notas de um aluno.</p>
+          <pre><code class="language-sql">
+-- Criação da Function
+CREATE OR REPLACE FUNCTION GET_MEDIA_ALUNO (
+  p_aluno_id IN ALUNOS.ID%TYPE
+)
+RETURN NUMBER -- A função retorna um número (média)
+IS
+  v_media NUMBER := 0;
+BEGIN
+  SELECT AVG(NOTA) INTO v_media
+  FROM NOTAS
+  WHERE ALUNO_ID = p_aluno_id;
+
+  -- Se não houver notas, a média pode ser NULL ou 0, dependendo da regra de negócio
+  IF v_media IS NULL THEN
+    RETURN 0; -- Ou levante uma exceção, ou retorne NULL
+  ELSE
+    RETURN v_media;
+  END IF;
+
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    RETURN 0; -- Aluno não existe, ou não tem notas.
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Erro ao calcular média: ' || SQLERRM);
+    RETURN NULL; -- Ou levante a exceção novamente
+END;
+/
+
+-- Como chamar a Function em um bloco PL/SQL
+SET SERVEROUTPUT ON;
+DECLARE
+  v_media_joao NUMBER;
+BEGIN
+  v_media_joao := GET_MEDIA_ALUNO(1); -- Supondo ID 1 para João
+  DBMS_OUTPUT.PUT_LINE('Média de notas de João: ' || v_media_joao);
+END;
+/
+
+-- Como chamar a Function em uma query SQL
+SELECT NOME, GET_MEDIA_ALUNO(ID) AS MediaNotas
+FROM ALUNOS
+WHERE STATUS_MATRICULA = 'Ativo';
+          </code></pre>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h2>4️⃣ Triggers (Gatilhos) <i class="fas fa-bolt"></i></h2>
+        <blockquote>
+          <p>Triggers são blocos de código PL/SQL ou SQL associados a uma tabela, view, schema ou banco de dados que são
+            executados automaticamente quando um evento específico ocorre (ex: <code>INSERT</code>, <code>UPDATE</code>,
+            <code>DELETE</code>, logon, logoff, etc.).
+          </p>
+        </blockquote>
+        <div class="card">
+          <h3>Sintaxe Básica:</h3>
+          <pre><code class="language-sql">
+CREATE [OR REPLACE] TRIGGER nome_trigger
+{BEFORE | AFTER | INSTEAD OF}
+{INSERT | UPDATE [OF coluna1, coluna2] | DELETE}
+ON nome_tabela_ou_view
+[FOR EACH ROW] -- Opcional: Para triggers de nível de linha
+[WHEN (condicao)] -- Opcional: Condição adicional para disparo
+DECLARE
+  -- Declarações locais (para triggers de nível de linha)
+BEGIN
+  -- Lógica do trigger
+  -- Variáveis especiais: :OLD.coluna e :NEW.coluna (para triggers de nível de linha)
+EXCEPTION
+  -- Tratamento de exceções
+END;
+/
+          </code></pre>
+          <h3>Tipos Comuns de Triggers:</h3>
+          <ul>
+            <li><strong>Timing:</strong> `BEFORE` (antes da operação DML) ou `AFTER` (depois da operação DML).</li>
+            <li><strong>Event:</strong> `INSERT`, `UPDATE`, `DELETE`. Você pode combinar múltiplos eventos (`INSERT OR
+              UPDATE OR DELETE`).</li>
+            <li><strong>Level:</strong>
+              <ul>
+                <li>`FOR EACH ROW` (Trigger de Nível de Linha): Dispara uma vez para cada linha afetada pela operação
+                  DML. Você pode acessar os valores antigos (`:OLD`) e novos (`:NEW`) das colunas.</li>
+                <li>(Sem `FOR EACH ROW`) (Trigger de Nível de Instrução): Dispara uma vez por instrução DML,
+                  independentemente do número de linhas afetadas. Não tem acesso a `:OLD` ou `:NEW`.</li>
+              </ul>
+            </li>
+            <li><strong>`INSTEAD OF` Trigger:</strong> Usado em views complexas (que não são diretamente atualizáveis)
+              para definir como as operações DML na view devem ser traduzidas para as tabelas base.</li>
+          </ul>
+          <h3>Variáveis Especiais (`:OLD` e `:NEW`):</h3>
+          <ul>
+            <li>Disponíveis apenas em triggers `FOR EACH ROW`.</li>
+            <li>`:OLD.coluna`: Refere-se ao valor da coluna ANTES da operação DML.</li>
+            <li>`:NEW.coluna`: Refere-se ao valor da coluna DEPOIS da operação DML.</li>
+          </ul>
+          <h3>Exemplo Prático:</h3>
+          <p>Criação de um trigger que impede a exclusão de um aluno se ele ainda estiver com `STATUS_MATRICULA =
+            'Ativo'`.</p>
+          <pre><code class="language-sql">
+-- Criação do Trigger
+CREATE OR REPLACE TRIGGER TRG_IMPEDIR_EXCLUSAO_ALUNO
+BEFORE DELETE ON ALUNOS
+FOR EACH ROW
+BEGIN
+  -- Verifica se o status de matrícula é 'Ativo'
+  IF :OLD.STATUS_MATRICULA = 'Ativo' THEN
+    -- Se for ativo, levanta uma exceção (erro)
+    RAISE_APPLICATION_ERROR(-20001, 'Não é permitido excluir um aluno com status de matrícula "Ativo". Altere o status para "Inativo" ou "Concluido" primeiro.');
+  END IF;
+END;
+/
+
+-- Testando o Trigger:
+-- Primeiro, insira um aluno ativo (se não tiver)
+INSERT INTO ALUNOS (ID, NOME, EMAIL, STATUS_MATRICULA) VALUES (101, 'Aluno Teste', 'teste@email.com', 'Ativo');
+COMMIT;
+
+-- Tentar excluir um aluno ativo (deve dar erro)
+DELETE FROM ALUNOS WHERE ID = 101 AND STATUS_MATRICULA = 'Ativo';
+
+-- Altere o status e tente novamente (deve funcionar)
+UPDATE ALUNOS SET STATUS_MATRICULA = 'Inativo' WHERE ID = 101;
+COMMIT;
+DELETE FROM ALUNOS WHERE ID = 101;
+COMMIT;
+          </code></pre>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h2>5️⃣ Abstração e Segurança: Views <i class="fas fa-eye"></i></h2>
+        <blockquote>
+          <p>Uma view é uma tabela virtual baseada no resultado de uma instrução SQL. Uma view contém linhas e colunas,
+            como uma tabela real, mas os dados não são armazenados nela; são derivados das tabelas base cada vez que a
+            view é acessada. Views são usadas para simplificar consultas complexas, fornecer segurança (mostrando apenas
+            certas colunas ou linhas) e abstrair a complexidade do esquema subjacente.</p>
+        </blockquote>
+        <div class="card">
+          <h3>5.1. <code>CREATE VIEW</code>: Criar uma View</h3>
+          <p>Define uma view com base em uma consulta SQL. A view não armazena dados, apenas a definição da consulta.
+            Quando a view é consultada, a consulta subjacente é executada.</p>
+          <pre><code class="language-sql">
+-- Criar uma view de alunos com suas médias de notas
+-- Assumindo que ALUNOS (ID, NOME) e NOTAS (ALUNO_ID, NOTA) existam.
+-- Exemplo de criação das tabelas para teste:
+-- CREATE TABLE ALUNOS (ID NUMBER PRIMARY KEY, NOME VARCHAR2(100), EMAIL VARCHAR2(100), STATUS_MATRICULA VARCHAR2(20));
+-- CREATE TABLE NOTAS (NOTA_ID NUMBER PRIMARY KEY, ALUNO_ID NUMBER, DISCIPLINA VARCHAR2(50), NOTA NUMBER, TURMA_ID NUMBER);
+-- CREATE TABLE TURMAS (ID NUMBER PRIMARY KEY, NOME_TURMA VARCHAR2(50));
+-- INSERT INTO ALUNOS VALUES (1, 'João Silva', 'joao@email.com', 'Ativo');
+-- INSERT INTO ALUNOS VALUES (2, 'Maria Souza', 'maria@email.com', 'Ativo');
+-- INSERT INTO NOTAS VALUES (1, 1, 'Matemática', 8.5, 101);
+-- INSERT INTO NOTAS VALUES (2, 1, 'Português', 7.0, 101);
+-- INSERT INTO NOTAS VALUES (3, 2, 'Matemática', 9.0, 102);
+-- INSERT INTO TURMAS VALUES (101, 'Turma A');
+-- INSERT INTO TURMAS VALUES (102, 'Turma B');
+-- COMMIT;
+
+CREATE VIEW VW_ALUNOS_MEDIA_NOTAS AS
+SELECT A.NOME, AVG(N.NOTA) AS MEDIA_NOTA
+FROM ALUNOS A
+JOIN NOTAS N ON A.ID = N.ALUNO_ID
+GROUP BY A.NOME;
+
+-- Exemplo de uso da view: Consultar alunos com média de notas superior a 7
+SELECT NOME, MEDIA_NOTA FROM VW_ALUNOS_MEDIA_NOTAS WHERE MEDIA_NOTA > 7;
+
+-- Outro exemplo: View para mostrar apenas informações sensíveis de alunos para um usuário específico
+CREATE VIEW VW_ALUNOS_INFO_BASICA AS
+SELECT ID, NOME, EMAIL
+FROM ALUNOS
+WHERE STATUS_MATRICULA = 'Ativo'; -- Supondo uma coluna STATUS_MATRICULA
+          </code></pre>
+
+          <h3>5.2. <code>DROP VIEW</code>: Remover uma View</h3>
+          <p>Remove a definição da view do banco de dados. Isso não afeta as tabelas base subjacentes.</p>
+          <pre><code class="language-sql">
+DROP VIEW VW_ALUNOS_MEDIA_NOTAS;
+          </code></pre>
+
+          <h3>5.3. Views Atualizáveis</h3>
+          <p>Views podem ser usadas para inserir, atualizar e excluir dados nas tabelas base, desde que certas condições
+            sejam atendidas. Uma view é considerável "atualizável" (ou "simples") se a operação de DML puder ser
+            claramente mapeada para uma única tabela base. Condições que geralmente tornam uma view não-atualizável
+            incluem:</p>
+          <ul>
+            <li>Uso de funções de agregação (`AVG`, `COUNT`, `SUM`, etc.).</li>
+            <li>Cláusula `GROUP BY`.</li>
+            <li>Cláusula `DISTINCT`.</li>
+            <li>Cláusula `UNION`, `UNION ALL`, `INTERSECT`, `MINUS`.</li>
+            <li>Subconsultas na lista `SELECT` que retornam múltiplas colunas ou usam funções de agregação.</li>
+            <li>Joins com múltiplas tabelas (em alguns SGBDs, views com joins podem ser atualizáveis sob certas
+              condições, mas com restrições).</li>
+            <li>Colunas derivadas (ex: `PRECO * QUANTIDADE`).</li>
+          </ul>
+          <pre><code class="language-sql">
+-- Criar uma view simples de uma tabela
+-- Para teste, vamos criar uma tabela PRODUTOS:
+-- CREATE TABLE PRODUTOS (PRODUTO_ID NUMBER PRIMARY KEY, NOME VARCHAR2(100), PRECO NUMBER, ESTOQUE NUMBER DEFAULT 0);
+-- INSERT INTO PRODUTOS VALUES (1, 'Teclado', 150, 10);
+-- INSERT INTO PRODUTOS VALUES (2, 'Mouse', 80, 20);
+-- COMMIT;
+
+CREATE VIEW VW_PRODUTOS_SIMPLES AS
+SELECT PRODUTO_ID, NOME, PRECO
+FROM PRODUTOS
+WHERE PRECO > 100;
+
+-- Inserir através da view (se a view for atualizável e a coluna obrigatória estiver presente)
+-- Note: O produto com PRECO <= 100 não aparecerá na view, mas será inserido na tabela base.
+-- Para que a inserção funcione, todas as colunas NOT NULL da tabela base que não possuem DEFAULT devem ser fornecidas,
+-- ou a view deve incluir essas colunas.
+-- Se PRODUTO_ID for PRIMARY KEY e não tiver uma sequence/trigger para preenchimento, precisaria ser fornecido.
+INSERT INTO VW_PRODUTOS_SIMPLES (PRODUTO_ID, NOME, PRECO) VALUES (3, 'Monitor', 950);
+INSERT INTO VW_PRODUTOS_SIMPLES (PRODUTO_ID, NOME, PRECO) VALUES (4, 'Webcam', 90); -- Não aparecerá na view, mas será inserido na tabela PRODUTOS
+COMMIT;
+
+-- Atualizar através da view
+UPDATE VW_PRODUTOS_SIMPLES SET PRECO = 160 WHERE PRODUTO_ID = 1;
+COMMIT;
+
+-- Deletar através da view
+DELETE FROM VW_PRODUTOS_SIMPLES WHERE PRODUTO_ID = 2; -- Este DELETE não afetará nenhuma linha pela view pois PRECO=80 não é >100, mas se fosse uma linha da view, funcionaria.
+-- Exemplo de DELETE que funcionaria (se o produto 3 fosse deletado):
+-- DELETE FROM VW_PRODUTOS_SIMPLES WHERE PRODUTO_ID = 3;
+COMMIT;
+
+-- Verifique a tabela base para ver as alterações
+-- SELECT * FROM PRODUTOS;
+          </code></pre>
+          <p>Mesmo que uma view seja atualizável, a cláusula `WHERE` da view pode impedir que algumas operações DML
+            sejam visíveis através dela, como demonstrado no exemplo da `Webcam` e o `DELETE` do `Mouse`. A operação DML
+            ocorre na tabela base, e a view apenas reflete o subconjunto de dados que satisfazem sua condição.</p>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <h2>Exercícios e Desafios <i class="fas fa-question-circle"></i></h2>
+        <p>Para solidificar seu aprendizado, tente resolver os seguintes desafios:</p>
+        <div class="card">
+          <ol>
+            <li>
+              Crie uma procedure chamada `CALCULAR_E_EXIBIR_MEDIA_TURMA` que receba o `ID_TURMA` como parâmetro de
+              entrada e exiba no console a média das notas de todos os alunos daquela turma. Se a turma não existir ou
+              não tiver notas, exiba uma mensagem apropriada usando `DBMS_OUTPUT.PUT_LINE` e `RAISE_APPLICATION_ERROR`
+              se a turma não existir.
+              <button onclick="toggleAnswer('ansEx1')">Mostrar Gabarito</button>
+              <div class="answer" id="ansEx1">
+                <pre><code class="language-sql">
+CREATE OR REPLACE PROCEDURE CALCULAR_E_EXIBIR_MEDIA_TURMA (
+  p_turma_id IN TURMAS.ID%TYPE
+)
+IS
+  v_media_turma NUMBER;
+  v_turma_existe NUMBER;
+BEGIN
+  -- Primeiro, verifica se a turma existe
+  SELECT COUNT(*) INTO v_turma_existe
+  FROM TURMAS
+  WHERE ID = p_turma_id;
+
+  IF v_turma_existe = 0 THEN
+    DBMS_OUTPUT.PUT_LINE('Erro: Turma com ID ' || p_turma_id || ' não encontrada.');
+    RAISE_APPLICATION_ERROR(-20001, 'Turma não encontrada para o ID fornecido.');
+  END IF;
+
+  -- Calcula a média das notas para a turma
+  SELECT AVG(N.NOTA) INTO v_media_turma
+  FROM NOTAS N
+  WHERE N.TURMA_ID = p_turma_id;
+
+  IF v_media_turma IS NULL THEN
+    DBMS_OUTPUT.PUT_LINE('Turma ' || p_turma_id || ' não possui notas registradas.');
+  ELSE
+    DBMS_OUTPUT.PUT_LINE('A média das notas da turma ' || p_turma_id || ' é: ' || ROUND(v_media_turma, 2));
+  END IF;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Ocorreu um erro ao calcular a média da turma: ' || SQLERRM);
+    RAISE; -- Re-lança a exceção original
+END;
+/
+
+-- Teste:
+SET SERVEROUTPUT ON;
+-- Certifique-se de que as tabelas ALUNOS, NOTAS e TURMAS existam e tenham dados para teste.
+-- Ex: INSERT INTO TURMAS (ID, NOME_TURMA) VALUES (101, 'Turma A');
+-- Ex: INSERT INTO NOTAS (NOTA_ID, ALUNO_ID, DISCIPLINA, NOTA, TURMA_ID) VALUES (1, 1, 'Matemática', 8.5, 101);
+-- EXEC CALCULAR_E_EXIBIR_MEDIA_TURMA(101); -- Substitua 101 por um ID de turma válido
+-- EXEC CALCULAR_E_EXIBIR_MEDIA_TURMA(999); -- Teste com ID de turma inexistente (deve lançar erro)
+                </code></pre>
+              </div>
+            </li>
+            <li>
+              Crie uma função chamada `GET_QTD_ALUNOS_POR_CIDADE` que receba o nome de uma cidade (`VARCHAR2`) e retorne
+              o número total de alunos cadastrados naquela cidade. Se a cidade não tiver alunos, a função deve retornar
+              0. Use `DBMS_OUTPUT.PUT_LINE` para depuração se necessário.
+              <button onclick="toggleAnswer('ansEx2')">Mostrar Gabarito</button>
+              <div class="answer" id="ansEx2">
+                <pre><code class="language-sql">
+CREATE OR REPLACE FUNCTION GET_QTD_ALUNOS_POR_CIDADE (
+  p_cidade IN ALUNOS.CIDADE%TYPE
+)
+RETURN NUMBER
+IS
+  v_qtd_alunos NUMBER := 0;
+BEGIN
+  SELECT COUNT(ID) INTO v_qtd_alunos
+  FROM ALUNOS
+  WHERE CIDADE = p_cidade;
+
+  DBMS_OUTPUT.PUT_LINE('DEBUG: Contagem de alunos para a cidade ' || p_cidade || ': ' || v_qtd_alunos); -- Linha de depuração
+
+  RETURN v_qtd_alunos;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Erro ao contar alunos na cidade: ' || SQLERRM);
+    RETURN NULL; -- Ou levante a exceção
+END;
+/
+
+-- Teste:
+SET SERVEROUTPUT ON;
+DECLARE
+  v_total NUMBER;
+BEGIN
+  -- Assumindo que você tem dados na tabela ALUNOS, por exemplo:
+  -- ALTER TABLE ALUNOS ADD CIDADE VARCHAR2(100);
+  -- UPDATE ALUNOS SET CIDADE = 'Recife' WHERE ID = 1;
+  -- INSERT INTO ALUNOS (ID, NOME, CIDADE) VALUES (4, 'Julia', 'Recife');
+  -- INSERT INTO ALUNOS (ID, NOME, CIDADE) VALUES (5, 'Pedro', 'São Paulo');
+  -- COMMIT;
+
+  v_total := GET_QTD_ALUNOS_POR_CIDADE('Recife'); -- Substitua 'Recife' por uma cidade válida
+  DBMS_OUTPUT.PUT_LINE('Total de alunos em Recife: ' || v_total);
+
+  v_total := GET_QTD_ALUNOS_POR_CIDADE('Cidade Inexistente');
+  DBMS_OUTPUT.PUT_LINE('Total de alunos em Cidade Inexistente: ' || v_total);
+END;
+/
+
+-- Teste em SQL:
+-- SELECT CIDADE, GET_QTD_ALUNOS_POR_CIDADE(CIDADE) AS TotalAlunos
+-- FROM ALUNOS
+-- GROUP BY CIDADE;
+                </code></pre>
+              </div>
+            </li>
+            <li>
+              Crie um trigger `BEFORE INSERT` na tabela `NOTAS` que, antes de inserir uma nova nota, verifique se a nota
+              está entre 0 e 10. Se não estiver, o trigger deve levantar uma exceção (`RAISE_APPLICATION_ERROR`)
+              impedindo a inserção e exibir uma mensagem de erro usando `DBMS_OUTPUT.PUT_LINE`.
+              <button onclick="toggleAnswer('ansEx3')">Mostrar Gabarito</button>
+              <div class="answer" id="ansEx3">
+                <pre><code class="language-sql">
+CREATE OR REPLACE TRIGGER TRG_VALIDAR_NOTA
+BEFORE INSERT ON NOTAS
+FOR EACH ROW
+BEGIN
+  IF :NEW.NOTA < 0 OR :NEW.NOTA > 10 THEN
+    DBMS_OUTPUT.PUT_LINE('Erro de Validação: A nota ' || :NEW.NOTA || ' está fora do intervalo permitido (0-10).');
+    RAISE_APPLICATION_ERROR(-20002, 'A nota deve estar entre 0 e 10.');
+  END IF;
+END;
+/
+
+-- Teste:
+SET SERVEROUTPUT ON; -- Certifique-se de que a saída do servidor está ativada
+
+-- Assumindo que você tem a tabela NOTAS e uma sequence SEQ_NOTAS_ID para o ID:
+-- CREATE TABLE NOTAS (ID NUMBER PRIMARY KEY, ALUNO_ID NUMBER, DISCIPLINA VARCHAR2(50), NOTA NUMBER);
+-- CREATE SEQUENCE SEQ_NOTAS_ID START WITH 1 INCREMENT BY 1;
+-- INSERT INTO ALUNOS (ID, NOME) VALUES (1, 'Joana'); -- Inserir um aluno para FK
+-- COMMIT;
+
+-- Deve funcionar
+INSERT INTO NOTAS (ID, ALUNO_ID, DISCIPLINA, NOTA) VALUES (SEQ_NOTAS_ID.NEXTVAL, 1, 'Geografia', 7.5);
+COMMIT;
+
+-- Deve dar erro (aqui a saída do DBMS_OUTPUT aparecerá antes da exceção)
+INSERT INTO NOTAS (ID, ALUNO_ID, DISCIPLINA, NOTA) VALUES (SEQ_NOTAS_ID.NEXTVAL, 1, 'Geografia', 11);
+COMMIT; -- Este COMMIT não será executado devido ao erro
+                </code></pre>
+              </div>
+            </li>
+            <li>
+              Crie uma view chamada <code>VW_COLABORADORES_ATUAIS</code> que selecione <code>nome</code>,
+              <code>cargo</code> e <code>data_contratacao</code> da tabela <code>Colaboradores_Ex</code>, mas apenas
+              para funcionários contratados após '2023-01-01' (use `TO_DATE`).
+              Em seguida, insira um novo colaborador através desta view (se for possível, caso contrário, explique por
+              que não).
+              <button onclick="toggleAnswer('ansEx4')">Mostrar Gabarito</button>
+              <div class="answer" id="ansEx4">
+                <pre><code class="language-sql">
+-- Para este exercício, vamos re-criar a tabela Colaboradores_Ex e inserir alguns dados
+-- para garantir que a view funcione.
+-- DROP TABLE Colaboradores_Ex CASCADE CONSTRAINTS;
+-- DROP SEQUENCE SEQ_FUNCIONARIOS_ID;
+
+CREATE TABLE Colaboradores_Ex (
+    funcionario_id NUMBER PRIMARY KEY,
+    nome VARCHAR2(100),
+    cargo VARCHAR2(100) NOT NULL,
+    data_contratacao DATE DEFAULT SYSDATE
+);
+
+CREATE SEQUENCE SEQ_FUNCIONARIOS_ID START WITH 1 INCREMENT BY 1;
+
+INSERT INTO Colaboradores_Ex (funcionario_id, nome, cargo, data_contratacao) VALUES (SEQ_FUNCIONARIOS_ID.NEXTVAL, 'Ana Silva', 'Desenvolvedor', TO_DATE('2024-01-10', 'YYYY-MM-DD'));
+INSERT INTO Colaboradores_Ex (funcionario_id, nome, cargo, data_contratacao) VALUES (SEQ_FUNCIONARIOS_ID.NEXTVAL, 'Beto Costa', 'Analista', TO_DATE('2022-05-20', 'YYYY-MM-DD'));
+INSERT INTO Colaboradores_Ex (funcionario_id, nome, cargo, data_contratacao) VALUES (SEQ_FUNCIONARIOS_ID.NEXTVAL, 'Carla Lima', 'Gerente', TO_DATE('2023-07-01', 'YYYY-MM-DD'));
+COMMIT;
+
+-- 1. Criar a view
+CREATE OR REPLACE VIEW VW_COLABORADORES_ATUAIS AS
+SELECT funcionario_id, nome, cargo, data_contratacao -- Inclua a PK para possibilitar a inserção se não houver DEFAULT ou SEQUENCE na tabela base
+FROM Colaboradores_Ex
+WHERE data_contratacao > TO_DATE('2023-01-01', 'YYYY-MM-DD');
+
+-- 2. Inserir um novo funcionário através da view
+-- Explicação: Esta view é atualizável porque seleciona colunas de uma única tabela
+-- e não possui funções de agregação, GROUP BY, etc.
+-- Ao incluir o `funcionario_id` na view, podemos fornecer um valor para a PK.
+-- Se a PK tivesse uma SEQUENCE ou DEFAULT na tabela base, a PK não precisaria estar na view para INSERT.
+
+INSERT INTO VW_COLABORADORES_ATUAIS (funcionario_id, nome, cargo, data_contratacao)
+VALUES (SEQ_FUNCIONARIOS_ID.NEXTVAL, 'Daniel Souza', 'DBA Junior', TO_DATE('2024-05-20', 'YYYY-MM-DD'));
+COMMIT;
+
+-- Verificar a view e a tabela base
+-- SELECT * FROM VW_COLABORADORES_ATUAIS;
+-- SELECT * FROM Colaboradores_Ex;
+                </code></pre>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Function to load the menu
+      function loadMenu() {
+        fetch('/menu.html')
+          .then(response => response.text())
+          .then(data => {
+            document.getElementById('menu-placeholder').innerHTML = data;
+            initializeSidebar(); // Initialize sidebar functionality after loading menu
+          })
+          .catch(error => console.error('Error loading menu:', error));
+      }
+
+      function initializeSidebar() {
+        const hamburgerMenu = document.getElementById('hamburger-menu');
+        const sidebar = document.getElementById('sidebar');
+        const content = document.getElementById('content');
+        const overlay = document.getElementById('overlay');
+        const sidebarLinks = sidebar.querySelectorAll('a');
+
+        function toggleSidebar() {
+          sidebar.classList.toggle('active');
+          content.classList.toggle('sidebar-active');
+          overlay.classList.toggle('active');
+        }
+
+        hamburgerMenu.addEventListener('click', toggleSidebar);
+        overlay.addEventListener('click', toggleSidebar);
+
+        sidebarLinks.forEach(link => {
+          link.addEventListener('click', function () {
+            if (sidebar.classList.contains('active')) {
+              toggleSidebar();
+            }
+          });
+        });
+
+        function highlightActiveLink() {
+          const currentPath = window.location.pathname.split('/').pop();
+          sidebarLinks.forEach(link => {
+            const linkPath = link.getAttribute('href');
+            if (linkPath === currentPath || (currentPath === '' && linkPath === 'index.html')) {
+              link.classList.add('active');
+            } else {
+              link.classList.remove('active');
+            }
+          });
+        }
+
+        highlightActiveLink();
+      }
+
+      // Load the menu when the DOM is ready
+      loadMenu();
+
+      window.toggleAnswer = function (id) {
+        var x = document.getElementById(id);
+        if (x.style.display === "none" || x.style.display === "") {
+          x.style.display = "block";
+        } else {
+          x.style.display = "none";
+        }
+      };
+    });
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+</body>
+
+</html>
