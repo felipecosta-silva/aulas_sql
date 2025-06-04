@@ -39,14 +39,11 @@
     document.addEventListener('DOMContentLoaded', function () {
       // Função para carregar o menu
       function loadMenu() {
-        // IMPORTANT: Verifique o caminho para menu.html
-        // Se menu.html estiver na mesma pasta que index.html, use 'menu.html'
-        // Se menu.html estiver dentro de uma pasta 'menu' (ex: 'menu/menu.html'), use '/menu/menu.html'
-        fetch('/menu.html') // <--- VERIFIQUE ESTE CAMINHO!
+        fetch('menu.html') // Certifique-se de que este caminho está correto para o seu ambiente
           .then(response => response.text())
           .then(data => {
             document.getElementById('menu-placeholder').innerHTML = data;
-            initializeSidebar(); // Inicializa a funcionalidade da sidebar APÓS carregar o menu
+            initializeSidebar(); // Inicializa a funcionalidade da sidebar após carregar o menu
           })
           .catch(error => console.error('Erro ao carregar o menu:', error));
       }
@@ -75,65 +72,26 @@
           });
         });
 
-        // **Função aprimorada e com DEBUG para destacar o link ativo**
         function highlightActiveLink() {
-          const currentURL = window.location.href;
-          const currentPathname = window.location.pathname; // Ex: "/", "/index.html", "/pasta/pagina.html"
-
-          // === DEBUG START ===
-          console.log('--- DEBUG DO MENU ---');
-          console.log('URL atual (href):', currentURL);
-          console.log('Caminho atual (pathname):', currentPathname);
-          // === DEBUG END ===
-
-          // Remove a classe 'active' de todos os links primeiro
+          const currentPath = window.location.pathname.split('/').pop();
           sidebarLinks.forEach(link => {
-            link.classList.remove('active');
-          });
-
-          // Itera sobre todos os links da sidebar
-          sidebarLinks.forEach(link => {
-            const linkHref = link.getAttribute('href'); // Ex: "index.html", "Conceitos BD.html"
-
-            // === DEBUG START ===
-            console.log('  Link no menu:', linkHref);
-            // === DEBUG END ===
-
-            // Lógica para marcar o link ativo
-            // Caso 1: Página inicial (index.html)
-            // A URL pode terminar em '/' ou '/index.html'
-            const isIndexPage = (currentPathname === '/' || currentPathname.endsWith('/index.html'));
-
-            // O link no menu deve ser 'index.html'
-            const isIndexLink = (linkHref === 'index.html');
-
-            if (isIndexPage && isIndexLink) {
+            const linkPath = link.getAttribute('href');
+            // Adicionamos a lógica para 'Conceitos Fundamentais de Banco de Dados.html'
+            if (linkPath === currentPath || (currentPath === '' && linkPath === 'index.html')) {
               link.classList.add('active');
-              // === DEBUG START ===
-              console.log('  MARCADO: Início (página inicial)');
-              // === DEBUG END ===
-            }
-            // Caso 2: Outras páginas (que não são a inicial)
-            // Compara o nome do arquivo da URL atual com o href do link do menu
-            else if (currentPathname.endsWith(linkHref) || decodeURIComponent(currentPathname).endsWith(linkHref)) {
-              link.classList.add('active');
-              // === DEBUG START ===
-              console.log('  MARCADO:', linkHref);
-              // === DEBUG END ===
+            } else {
+              link.classList.remove('active');
             }
           });
-          // === DEBUG START ===
-          console.log('--- FIM DO DEBUG DO MENU ---');
-          // === DEBUG END ===
         }
 
-        highlightActiveLink(); // Chama a função ao inicializar a sidebar
+        highlightActiveLink();
       }
 
       // Carrega o menu quando o DOM estiver pronto
       loadMenu();
 
-      // Função para mostrar/esconder o gabarito (mantida para consistência)
+      // Função para mostrar/esconder o gabarito
       window.toggleAnswer = function (id) {
         var x = document.getElementById(id);
         if (x.style.display === "none" || x.style.display === "") {
